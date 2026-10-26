@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="640" viewBox="0 0 512 640">
+<rect width="512" height="640" fill="#141C2E"/>
+<rect x="156" y="160" width="200" height="140" rx="12" fill="#3DE7FF" opacity="0.25"/>
+<text x="256" y="240" text-anchor="middle" font-size="24" fill="#3DE7FF" font-family="Arial">NAVIGATOR</text>
+<text x="256" y="400" text-anchor="middle" font-size="16" fill="#8B95B0" font-family="Arial">Sees all. Touches nothing.</text>
+</svg>

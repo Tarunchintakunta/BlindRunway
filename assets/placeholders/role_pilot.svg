@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="640" viewBox="0 0 512 640">
+<rect width="512" height="640" fill="#141C2E"/>
+<circle cx="256" cy="220" r="90" fill="#3DE7FF" opacity="0.2"/>
+<text x="256" y="240" text-anchor="middle" font-size="28" fill="#F4F7FF" font-family="Arial">PILOT</text>
+<text x="256" y="400" text-anchor="middle" font-size="16" fill="#8B95B0" font-family="Arial">Flies. Blind to instruments.</text>
+</svg>
