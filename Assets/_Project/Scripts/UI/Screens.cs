@@ -38,7 +38,7 @@ namespace BlindRunway
             System.Action[] actions =
             {
                 Play,
-                () => App.I.Toast("Level select arrives soon."),
+                () => LevelSelect(),
                 () => App.I.Toast("Settings arrive soon."),
                 Application.Quit,
             };
@@ -73,6 +73,80 @@ namespace BlindRunway
         }
 
         void Host() => App.I.Session.Host();
+
+        // Route map: five airports joined by a dashed flight path.
+        public void LevelSelect(int focus = -1)
+        {
+            var s = App.I.Session;
+            if (focus < 0) focus = s.PickedLevel;
+            var r = Clear();
+            Stars(r, 60);
+            var title = Ui.Label(r, "ROUTES", 56, Tokens.TextPrimary, TextAnchor.UpperLeft, FontStyle.Bold);
+            Ui.Place(title, new Vector2(0, 1), new Vector2(48, -48), new Vector2(600, 70));
+
+            int n = Levels.Count;
+            var pts = new Vector2[n];
+            for (int i = 0; i < n; i++)
+                pts[i] = new Vector2(-640 + i * (1280f / Mathf.Max(1, n - 1)), 120 + Mathf.Sin(i * 1.3f) * 110);
+            for (int i = 0; i + 1 < n; i++) Dashes(r, pts[i], pts[i + 1]);
+
+            for (int i = 0; i < n; i++)
+            {
+                int idx = i;
+                var def = Levels.Get(i);
+                bool sel = i == focus;
+                var glow = Ui.Img(r, Tokens.Cyan.A(sel ? 0.25f : 0.08f), Ui.Circle);
+                Ui.Place(glow, new Vector2(0.5f, 0.5f), pts[i], new Vector2(150, 150));
+                if (sel) Ui.Pulsing(glow);
+                var node = Ui.Img(r, sel ? Tokens.Cyan : Tokens.BgPanel, Ui.Circle);
+                node.raycastTarget = true;
+                Ui.Place(node, new Vector2(0.5f, 0.5f), pts[i], new Vector2(96, 96));
+                var b = node.gameObject.AddComponent<Button>();
+                b.targetGraphic = node;
+                b.onClick.AddListener(() => LevelSelect(idx));
+                node.gameObject.AddComponent<Pop>();
+                Ui.In(node, 0.08f * i);
+                for (int k = 0; k < 8; k++) // airport lights ring
+                {
+                    float a = k / 8f * Mathf.PI * 2;
+                    var lamp = Ui.Img(node.transform, Tokens.Cabin, Ui.Circle);
+                    Ui.Place(lamp, new Vector2(0.5f, 0.5f), new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 60, new Vector2(8, 8));
+                }
+                Ui.Fill(Ui.Label(node.transform, $"{def.number:00}", 34, sel ? Tokens.BgVoid : Tokens.TextPrimary, TextAnchor.MiddleCenter, FontStyle.Bold).rectTransform);
+                var name = Ui.Label(r, def.title.ToUpperInvariant(), 22, sel ? Tokens.TextPrimary : Tokens.TextMuted, TextAnchor.UpperCenter, FontStyle.Bold);
+                Ui.Place(name, new Vector2(0.5f, 0.5f), pts[i] + new Vector2(0, -95), new Vector2(260, 60));
+            }
+
+            var f = Levels.Get(focus);
+            var panel = Ui.Img(r, Tokens.BgPanel);
+            Ui.Place(panel, new Vector2(0.5f, 0), new Vector2(0, 150), new Vector2(1100, 260));
+            var t = panel.transform;
+            Ui.Place(Ui.Label(t, $"LEVEL {f.number:00}  -  {f.title.ToUpperInvariant()}", 34, Tokens.Cyan, TextAnchor.UpperLeft, FontStyle.Bold), new Vector2(0, 1), new Vector2(32, -24), new Vector2(1040, 44));
+            Ui.Place(Ui.Label(t, f.brief, 24, Tokens.TextPrimary, TextAnchor.UpperLeft), new Vector2(0, 1), new Vector2(32, -78), new Vector2(1040, 60));
+            var obj = Ui.Label(t, "-  " + string.Join("\n-  ", f.objectives), 22, Tokens.TextMuted, TextAnchor.UpperLeft);
+            Ui.Place(obj, new Vector2(0, 1), new Vector2(32, -130), new Vector2(700, 120));
+
+            var host = Ui.Btn(r, "HOST THIS ROUTE", () =>
+            {
+                s.PickedLevel = focus;
+                s.Host();
+            });
+            Ui.Place(host, new Vector2(1, 0), new Vector2(-48, 48), new Vector2(380, 76));
+            var back = Ui.Btn(r, "BACK", Menu, Tokens.BgPanel);
+            Ui.Place(back, new Vector2(0, 0), new Vector2(48, 48), new Vector2(220, 70));
+        }
+
+        static void Dashes(Transform r, Vector2 a, Vector2 b)
+        {
+            var d = b - a;
+            float len = d.magnitude, ang = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
+            for (float x = 70; x < len - 70; x += 28)
+            {
+                var dash = Ui.Img(r, Tokens.TextMuted.A(0.5f), null);
+                Ui.Place(dash, new Vector2(0.5f, 0.5f), a + d.normalized * x, new Vector2(14, 3));
+                dash.transform.localRotation = Quaternion.Euler(0, 0, ang);
+            }
+        }
         void Join(string code) => App.I.Session.Join(code);
 
         // Called whenever Session state changes.

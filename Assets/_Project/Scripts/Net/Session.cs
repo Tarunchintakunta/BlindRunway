@@ -49,6 +49,7 @@ namespace BlindRunway
         public Role SoloView = Role.Pilot;
         public Snapshot Snap;          // latest snapshot for this client
         public LevelDefinition Def;    // level being played
+        public int PickedLevel;        // chosen on the route map before hosting
         public ResultMsg Result;       // last finished attempt
         float sendT;
 
@@ -125,7 +126,7 @@ namespace BlindRunway
                 App.I.Toast("Could not host (is port 7777 busy?)");
                 return;
             }
-            srv = new LobbyState { code = Net.ToCode(Net.LocalIp()) };
+            srv = new LobbyState { code = Net.ToCode(Net.LocalIp()), level = PickedLevel };
             SetPhase(Phase.Lobby, null);
         }
 
