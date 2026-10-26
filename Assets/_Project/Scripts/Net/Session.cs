@@ -126,7 +126,16 @@ namespace BlindRunway
 
         // ---- client API ----
 
-        public void Host()
+        public void Host() => Host(false);
+
+        // Single player: host-only listen server, straight into the match, no lobby.
+        public void PlayAlone(int level)
+        {
+            PickedLevel = level;
+            Host(true);
+        }
+
+        void Host(bool solo)
         {
             if (!Net.Host())
             {
@@ -134,7 +143,14 @@ namespace BlindRunway
                 return;
             }
             srv = new LobbyState { code = Net.ToCode(Net.LocalIp()), level = Mathf.Min(PickedLevel, Progress.Unlocked) };
-            SetPhase(Phase.Lobby, null);
+            if (!solo)
+            {
+                SetPhase(Phase.Lobby, null);
+                return;
+            }
+            for (int i = 0; i < 3; i++) srv.seat[i] = (long)NetworkManager.ServerClientId;
+            srv.solo = true;
+            StartMatch();
         }
 
         public void Join(string code)
@@ -360,8 +376,8 @@ namespace BlindRunway
         void SetPhase(Phase p, string note)
         {
             srvPhase = p;
+            Push(); // seats first, so screens built on the phase change see who sits where
             Net.ToAll(Msg.Phase, new PhaseMsg { phase = p, level = srv.level, note = note });
-            Push();
         }
 
         void Push()

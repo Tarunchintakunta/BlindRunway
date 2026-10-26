@@ -39,18 +39,19 @@ namespace BlindRunway
             var glow = Ui.Img(r, Tokens.Cyan.A(0.07f), Ui.Circle);
             Ui.Place(glow, new Vector2(0.5f, 0.5f), new Vector2(0, 220), new Vector2(1500, 320));
             Logo(r, new Vector2(0, 220));
-            string[] labels = { "PLAY", "LEVELS", "SETTINGS", "QUIT" };
+            string[] labels = { "PLAY ALONE", "PLAY WITH FRIENDS", "LEVELS", "SETTINGS", "QUIT" };
             System.Action[] actions =
             {
+                () => LevelSelect(-1, RouteMode.Solo),
                 Play,
-                () => LevelSelect(),
+                () => LevelSelect(-1, RouteMode.Ask),
                 () => App.I.Overlay.Settings(null),
                 Application.Quit,
             };
             for (int i = 0; i < labels.Length; i++)
             {
-                var b = Ui.Btn(r, labels[i], actions[i], i == 0 ? Tokens.Cyan : Tokens.BgPanel);
-                Ui.Place(b, new Vector2(0.5f, 0.5f), new Vector2(0, 40 - i * 92), new Vector2(420, 76));
+                var b = Ui.Btn(r, labels[i], actions[i], i == 0 ? Tokens.Cyan : i == 1 ? Tokens.Amber : Tokens.BgPanel);
+                Ui.Place(b, new Vector2(0.5f, 0.5f), new Vector2(0, 60 - i * 88), new Vector2(460, 72));
                 Ui.In(b, 0.08f * i);
             }
         }
@@ -80,7 +81,10 @@ namespace BlindRunway
         void Host() => App.I.Session.Host();
 
         // Route map: five airports joined by a dashed flight path.
-        public void LevelSelect(int focus = -1)
+        // Solo: fly alone. Friends: host a lobby. Ask: offer both (opened from LEVELS).
+        public enum RouteMode { Solo, Friends, Ask }
+
+        public void LevelSelect(int focus = -1, RouteMode mode = RouteMode.Ask)
         {
             var s = App.I.Session;
             if (focus < 0) focus = s.PickedLevel;
@@ -109,7 +113,7 @@ namespace BlindRunway
                 Ui.Place(node, new Vector2(0.5f, 0.5f), pts[i], new Vector2(96, 96));
                 var b = node.gameObject.AddComponent<Button>();
                 b.targetGraphic = node;
-                b.onClick.AddListener(() => LevelSelect(idx));
+                b.onClick.AddListener(() => LevelSelect(idx, mode));
                 node.gameObject.AddComponent<Pop>();
                 Ui.In(node, 0.08f * i);
                 for (int k = 0; k < 8; k++) // airport lights ring
@@ -134,14 +138,24 @@ namespace BlindRunway
             var obj = Ui.Label(t, "-  " + string.Join("\n-  ", f.objectives), 22, Tokens.TextMuted, TextAnchor.UpperLeft);
             Ui.Place(obj, new Vector2(0, 1), new Vector2(32, -130), new Vector2(700, 120));
 
-            bool canHost = Progress.IsUnlocked(focus);
-            var host = Ui.Btn(r, canHost ? "HOST THIS ROUTE" : $"CLEAR LEVEL {focus:00} FIRST", () =>
+            bool canFly = Progress.IsUnlocked(focus);
+            float x = -48;
+            if (mode != RouteMode.Friends)
             {
-                s.PickedLevel = focus;
-                s.Host();
-            }, canHost ? Tokens.Cyan : Tokens.BgPanel);
-            host.interactable = canHost;
-            Ui.Place(host, new Vector2(1, 0), new Vector2(-48, 48), new Vector2(380, 76));
+                var solo = Ui.Btn(r, canFly ? "FLY SOLO" : $"CLEAR LEVEL {focus:00} FIRST", () => s.PlayAlone(focus), canFly ? Tokens.Cyan : Tokens.BgPanel);
+                solo.interactable = canFly;
+                Ui.Place(solo, new Vector2(1, 0), new Vector2(x, 48), new Vector2(380, 76));
+                x -= 410;
+            }
+            if (mode != RouteMode.Solo && canFly)
+            {
+                var host = Ui.Btn(r, "HOST FOR FRIENDS", () =>
+                {
+                    s.PickedLevel = focus;
+                    s.Host();
+                }, Tokens.Amber);
+                Ui.Place(host, new Vector2(1, 0), new Vector2(x, 48), new Vector2(380, 76));
+            }
             var back = Ui.Btn(r, "BACK", Menu, Tokens.BgPanel);
             Ui.Place(back, new Vector2(0, 0), new Vector2(48, 48), new Vector2(220, 70));
         }
