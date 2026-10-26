@@ -37,7 +37,7 @@ namespace BlindRunway.PlayTests
             yield return new WaitForSeconds(1.5f);
             Assert.Greater(s.Snap.time, t0 + 1f, "server sim should be running");
             Assert.Less(s.Snap.pos.z, -8000f);
-            Assert.IsTrue(s.Snap.nav && s.Snap.cabin, "solo view gets every seat's data");
+            Assert.IsFalse(s.Snap.nav, "solo Pilot seat must not receive instruments");
 
             foreach (var role in new[] { Role.Navigator, Role.Cabin, Role.Pilot })
             {
@@ -46,6 +46,9 @@ namespace BlindRunway.PlayTests
                 yield return null;
                 yield return null;
                 Assert.AreEqual(role, s.MyRole);
+                yield return new WaitForSeconds(0.3f); // next snapshot follows the driven seat
+                Assert.AreEqual(role == Role.Navigator, s.Snap.nav, role + " instruments");
+                Assert.AreEqual(role == Role.Cabin, s.Snap.cabin, role + " cabin detail");
                 if (role == Role.Cabin) Assert.AreEqual(4, App.I.World.Pax.Count);
             }
 

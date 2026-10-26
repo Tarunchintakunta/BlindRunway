@@ -58,6 +58,7 @@ namespace BlindRunway
         float sendT;
 
         Match match;                   // server only
+        Role soloSeat = Role.Pilot;    // server: seat the solo player is driving right now
         float simAcc, snapT, introT;
         readonly bool[] gotIt = new bool[3];
         const float IntroTimeout = 30;
@@ -299,14 +300,25 @@ namespace BlindRunway
             Push();
         }
 
-        // Ownership rule: a client may only drive the seat it holds.
+        // Ownership rule. Multiplayer: a client drives only the seat it holds.
+        // Solo: the one local player holds all three seats and names the one it is driving.
+        public static Role SeatFor(LobbyState L, ulong sender, int claimedRole)
+        {
+            if (L.Solo)
+            {
+                bool ownsAll = L.seat[0] == (long)sender && L.seat[1] == (long)sender && L.seat[2] == (long)sender;
+                return ownsAll && claimedRole >= 0 && claimedRole <= 2 ? (Role)claimedRole : Role.None;
+            }
+            return (Role)Array.IndexOf(L.seat, (long)sender);
+        }
+
         void OnInput(ulong sender, string json)
         {
             if (!Net.IsServer || srvPhase != Phase.Playing) return;
             var m = JsonUtility.FromJson<InputMsg>(json);
-            var role = srv.Solo ? (Role)m.role : (Role)Array.IndexOf(srv.seat, (long)sender);
-            if (srv.Solo && !IsHostSender(sender)) return;
-            if (role < Role.Pilot || role > Role.Cabin) return;
+            var role = SeatFor(srv, sender, m.role);
+            if (role == Role.None) return;
+            if (srv.Solo) soloSeat = role;
             if (m.say != null && m.say.Length > 40) m.say = m.say.Substring(0, 40);
             InputReceived?.Invoke(role, m);
         }
@@ -326,6 +338,7 @@ namespace BlindRunway
             for (int i = 0; i < 3; i++) srv.ready[i] = false;
             match = new Match(Levels.Get(srv.level));
             simAcc = snapT = introT = 0;
+            soloSeat = Role.Pilot;
             for (int i = 0; i < 3; i++) gotIt[i] = false;
             SetPhase(Phase.Intro, null);
         }
@@ -368,9 +381,9 @@ namespace BlindRunway
 
         void SendSnapshots()
         {
-            if (srv.Solo)
+            if (srv.Solo) // only the seat being driven: solo never shows the Pilot numbers
             {
-                Net.Send(NetworkManager.ServerClientId, Msg.Snap, match.SnapshotFor(Role.None));
+                Net.Send(NetworkManager.ServerClientId, Msg.Snap, match.SnapshotFor(soloSeat));
                 return;
             }
             for (int i = 0; i < 3; i++)
