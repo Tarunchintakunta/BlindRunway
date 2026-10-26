@@ -39,7 +39,7 @@ namespace BlindRunway
             NM.ConnectionApprovalCallback = (req, res) =>
             {
                 bool full = PlayerCount >= MaxPlayers;
-                res.Approved = !full && AcceptingPlayers();
+                res.Approved = req.ClientNetworkId == NetworkManager.ServerClientId || (!full && AcceptingPlayers()); // host is always in
                 res.CreatePlayerObject = false;
                 if (!res.Approved) res.Reason = full ? "Crew is full (3/3)." : "Match already in progress.";
             };
