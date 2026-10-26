@@ -199,6 +199,7 @@ namespace BlindRunway
             var s = App.I.Session;
             var res = s.Result ?? new ResultMsg { reason = "unknown" };
             var r = Clear(false);
+            if (!res.win) App.I.World.Shake(1.5f);
             Ui.Fill(Ui.Img(r, Tokens.BgVoid.A(0.72f), null).rectTransform);
             var head = Ui.Label(r, res.win ? "LANDED" : "WHY WE DIED", 96, res.win ? Tokens.Success : Tokens.Danger, TextAnchor.MiddleCenter, FontStyle.Bold);
             Ui.Place(head, new Vector2(0.5f, 0.5f), new Vector2(0, 260), new Vector2(1400, 120));

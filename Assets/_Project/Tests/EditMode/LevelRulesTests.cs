@@ -58,5 +58,21 @@ namespace BlindRunway.Tests
             m.T = m.L.timeLimit + 1;
             Assert.AreEqual("timer", LevelRules.Check(m).reason);
         }
+
+        [Test]
+        public void CrashFuelAndPanicFail()
+        {
+            var m = NewMatch();
+            m.Plane.crash = "gear-up";
+            Assert.AreEqual("gear-up", LevelRules.Check(m).reason);
+
+            m = NewMatch();
+            m.Plane.fuel = 0;
+            Assert.AreEqual("fuel", LevelRules.Check(m).reason);
+
+            m = NewMatch(2);
+            foreach (var p in m.Cabin.pax) p.panic = 1;
+            Assert.AreEqual("panic", LevelRules.Check(m).reason);
+        }
     }
 }

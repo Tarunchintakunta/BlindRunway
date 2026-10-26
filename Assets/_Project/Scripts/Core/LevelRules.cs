@@ -19,7 +19,10 @@ namespace BlindRunway
         {
             var p = m.Plane;
             string fail;
-            if (m.TimeLeft <= 0) fail = "timer";
+            if (p.crash != null) fail = p.crash;
+            else if (p.fuel <= 0 && !p.onGround) fail = "fuel";
+            else if (m.Cabin.Panic >= 1) fail = "panic";
+            else if (m.TimeLeft <= 0) fail = "timer";
             else if (p.stopped) fail = LandingVerdict(m);
             else return null;
 
