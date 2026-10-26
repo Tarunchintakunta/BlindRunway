@@ -201,11 +201,54 @@ namespace BlindRunway
             var r = Clear(false);
             if (!res.win) App.I.World.Shake(1.5f);
             Ui.Fill(Ui.Img(r, Tokens.BgVoid.A(0.72f), null).rectTransform);
+
             var head = Ui.Label(r, res.win ? "LANDED" : "WHY WE DIED", 96, res.win ? Tokens.Success : Tokens.Danger, TextAnchor.MiddleCenter, FontStyle.Bold);
-            Ui.Place(head, new Vector2(0.5f, 0.5f), new Vector2(0, 260), new Vector2(1400, 120));
-            var why = Ui.Label(r, res.win ? $"{res.stars} / 3 stars" : res.reason, 36, Tokens.TextPrimary);
-            Ui.Place(why, new Vector2(0.5f, 0.5f), new Vector2(0, 160), new Vector2(1400, 50));
+            Ui.Place(head, new Vector2(0.5f, 0.5f), new Vector2(0, 330), new Vector2(1400, 120));
+            var why = Ui.Label(r, LevelRules.Describe(res.reason), 34, Tokens.TextPrimary);
+            Ui.Place(why, new Vector2(0.5f, 0.5f), new Vector2(0, 245), new Vector2(1400, 50));
+
+            if (res.win)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    var star = Ui.Img(r, i < res.stars ? Tokens.Cabin : Tokens.TextMuted.A(0.25f), Ui.Star);
+                    Ui.Place(star, new Vector2(0.5f, 0.5f), new Vector2((i - 1) * 130, 140), new Vector2(110, 110));
+                    Ui.In(star, 0.3f + i * 0.15f);
+                }
+                Confetti(r);
+            }
+
+            for (int i = 0; i < res.cards.Length; i++)
+            {
+                var c = res.cards[i];
+                var tint = Roles.Tint(c.role);
+                var card = Ui.Img(r, Tokens.BgPanel);
+                Ui.Place(card, new Vector2(0.5f, 0.5f), new Vector2((i - 1) * 470, res.win ? -110 : -40), new Vector2(430, 280));
+                card.transform.localRotation = Quaternion.Euler(0, 0, (1 - i) * 3f);
+                Ui.In(card, 0.5f + i * 0.12f);
+                var t = card.transform;
+                Ui.Place(Ui.Img(t, tint), new Vector2(0.5f, 1), Vector2.zero, new Vector2(430, 8));
+                Ui.Place(Ui.Label(t, Roles.Names[(int)c.role], 20, tint, TextAnchor.UpperLeft, FontStyle.Bold), new Vector2(0, 1), new Vector2(24, -26), new Vector2(380, 26));
+                Ui.Place(Ui.Label(t, c.title, 32, Tokens.TextPrimary, TextAnchor.UpperLeft, FontStyle.Bold), new Vector2(0, 1), new Vector2(24, -62), new Vector2(390, 80));
+                Ui.Place(Ui.Label(t, c.body, 24, Tokens.TextMuted, TextAnchor.UpperLeft), new Vector2(0, 1), new Vector2(24, -150), new Vector2(390, 110));
+            }
             ResultButtons(r, res);
+        }
+
+        // Tasteful, not casino: 36 flakes, once.
+        static void Confetti(Transform r)
+        {
+            var rng = new System.Random();
+            Color[] colors = { Tokens.Cyan, Tokens.Amber, Tokens.Cabin, Tokens.Success };
+            for (int i = 0; i < 36; i++)
+            {
+                var f = Ui.Img(r, colors[i % colors.Length], null);
+                Ui.Place(f, new Vector2((float)rng.NextDouble(), 1), new Vector2(0, 20), new Vector2(10, 18));
+                var fall = f.gameObject.AddComponent<Fall>();
+                fall.speed = 300 + (float)rng.NextDouble() * 300;
+                fall.spin = (float)rng.NextDouble() * 360 - 180;
+                fall.delay = (float)rng.NextDouble() * 0.8f;
+            }
         }
 
         void ResultButtons(Transform r, ResultMsg res)
@@ -253,6 +296,21 @@ namespace BlindRunway
             Ui.Place(Ui.Img(p, c), new Vector2(0.5f, 0.5f), new Vector2(10, 0) * scale, new Vector2(70, 260) * scale); // wings
             Ui.Place(Ui.Img(p, c), new Vector2(0.5f, 0.5f), new Vector2(-160, 0) * scale, new Vector2(36, 110) * scale); // tail
             return p;
+        }
+    }
+
+    public class Fall : MonoBehaviour
+    {
+        public float speed, spin, delay;
+
+        void Update()
+        {
+            delay -= Time.unscaledDeltaTime;
+            if (delay > 0) return;
+            var rt = (RectTransform)transform;
+            rt.anchoredPosition += Vector2.down * (speed * Time.unscaledDeltaTime);
+            rt.Rotate(new Vector3(0, 0, spin * Time.unscaledDeltaTime));
+            if (rt.anchoredPosition.y < -1300) Destroy(gameObject);
         }
     }
 }

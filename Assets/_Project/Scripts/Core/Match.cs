@@ -53,6 +53,11 @@ namespace BlindRunway
         public float T;
         public readonly List<Callout> Callouts = new List<Callout>();
 
+        // Blame-card stats
+        public readonly int[] Said = new int[3];
+        public int SayAgain;
+        public float PeakPanic, GlitchTrust;
+
         readonly InputMsg pilot = new InputMsg();
         bool gearReq, flapsReq;
         float pingGearUntil = -1, pingFlapsUntil = -1;
@@ -103,6 +108,8 @@ namespace BlindRunway
         public void AddCallout(Role from, string text)
         {
             Callouts.Add(new Callout { seq = ++seq, from = from, text = text });
+            if (from >= Role.Pilot) Said[(int)from]++;
+            if (from == Role.Pilot && text == Controls.PilotCallouts[0]) SayAgain++;
             if (Callouts.Count > 6) Callouts.RemoveAt(0);
         }
 
@@ -115,6 +122,8 @@ namespace BlindRunway
             Plane.cog = Cabin.Cog;
             Plane.Step(pilot, dt);
             Cabin.Step(dt, Plane, Glitch, T);
+            PeakPanic = Mathf.Max(PeakPanic, Cabin.Panic);
+            if (Glitch && Mathf.Abs(pilot.pitch) > 0.3f) GlitchTrust += dt;
         }
 
         // Ideal height on a 3 deg path to a touchdown point 300 m past the threshold.

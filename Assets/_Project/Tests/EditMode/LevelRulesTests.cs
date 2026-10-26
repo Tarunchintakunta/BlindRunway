@@ -74,5 +74,17 @@ namespace BlindRunway.Tests
             foreach (var p in m.Cabin.pax) p.panic = 1;
             Assert.AreEqual("panic", LevelRules.Check(m).reason);
         }
+
+        [Test]
+        public void BlameCardsCoverEverySeatAndRoastTheCulprit()
+        {
+            var m = NewMatch();
+            m.Plane.crash = "gear-up";
+            var r = LevelRules.Check(m);
+            Assert.AreEqual(3, r.cards.Length);
+            Assert.AreEqual(Role.Pilot, r.cards[0].role);
+            Assert.AreEqual("BELLY LANDER", r.cards[0].title);
+            Assert.AreEqual("SILENT TREATMENT", r.cards[1].title);
+        }
     }
 }
