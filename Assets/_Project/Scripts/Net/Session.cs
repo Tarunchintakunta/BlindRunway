@@ -163,7 +163,7 @@ namespace BlindRunway
             if (m.phase == Phase.Playing && Phase != Phase.Playing)
             {
                 Snap = null;
-                Def = ScriptableObject.CreateInstance<LevelDefinition>();
+                Def = Levels.Get(m.level);
             }
             Phase = m.phase;
             Level = m.level;
@@ -217,6 +217,10 @@ namespace BlindRunway
                         srv.ready[mine] = false;
                     }
                     srv.seat[a.role] = (long)sender;
+                    break;
+                case "level":
+                    if (!IsHostSender(sender) || srvPhase != Phase.Lobby) return;
+                    srv.level = Mathf.Clamp(a.level, 0, Levels.Count - 1);
                     break;
                 case "ready":
                     if (srvPhase != Phase.Lobby || mine < 0) return;
@@ -272,7 +276,7 @@ namespace BlindRunway
         void StartMatch()
         {
             for (int i = 0; i < 3; i++) srv.ready[i] = false;
-            match = new Match(ScriptableObject.CreateInstance<LevelDefinition>());
+            match = new Match(Levels.Get(srv.level));
             simAcc = snapT = 0;
             SetPhase(Phase.Playing, null);
         }

@@ -128,6 +128,7 @@ namespace BlindRunway
             var crew = Ui.Label(r, $"CREW {L.players}/3", 26, Tokens.TextMuted, TextAnchor.UpperLeft);
             Ui.Place(crew, new Vector2(0, 1), new Vector2(50, -120), new Vector2(400, 36));
 
+            LevelPicker(r, L, s.IsHost);
             for (int i = 0; i < 3; i++) RoleCard(r, (Role)i, L, s.MyRole, i);
             lobbyAnimated = true;
 
@@ -156,6 +157,26 @@ namespace BlindRunway
                 : "Starts when all three seats are ready.";
             var h = Ui.Label(r, hint, 26, Tokens.TextMuted);
             Ui.Place(h, new Vector2(0.5f, 0), new Vector2(0, 150), new Vector2(1200, 40));
+        }
+
+        static void LevelPicker(Transform r, LobbyState L, bool host)
+        {
+            var def = Levels.Get(L.level);
+            var name = Ui.Label(r, $"LEVEL {def.number:00}  -  {def.title.ToUpperInvariant()}", 34, Tokens.TextPrimary, TextAnchor.MiddleCenter, FontStyle.Bold);
+            Ui.Place(name, new Vector2(0.5f, 1), new Vector2(0, -60), new Vector2(1000, 50));
+            var brief = Ui.Label(r, def.brief, 24, Tokens.TextMuted);
+            Ui.Place(brief, new Vector2(0.5f, 1), new Vector2(0, -105), new Vector2(1000, 36));
+            if (!host) return;
+            if (L.level > 0)
+            {
+                var prev = Ui.Btn(r, "<", () => App.I.Session.Act("level", 0, L.level - 1), Tokens.BgPanel);
+                Ui.Place(prev, new Vector2(0.5f, 1), new Vector2(-560, -55), new Vector2(64, 60));
+            }
+            if (L.level < Levels.Count - 1)
+            {
+                var next = Ui.Btn(r, ">", () => App.I.Session.Act("level", 0, L.level + 1), Tokens.BgPanel);
+                Ui.Place(next, new Vector2(0.5f, 1), new Vector2(560, -55), new Vector2(64, 60));
+            }
         }
 
         void RoleCard(Transform r, Role role, LobbyState L, Role mine, int i)
