@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+<rect width="1200" height="600" fill="#0B1020"/>
+<path d="M80 400 C300 350, 500 450, 700 300 S1000 200, 1120 220" stroke="#3DE7FF" stroke-width="4" fill="none" opacity="0.6"/>
+<circle cx="150" cy="380" r="18" fill="#FFB020"/><text x="150" y="420" text-anchor="middle" fill="#F4F7FF" font-size="14" font-family="Arial">L1</text><circle cx="350" cy="340" r="18" fill="#FFB020"/><text x="350" y="380" text-anchor="middle" fill="#F4F7FF" font-size="14" font-family="Arial">L2</text><circle cx="550" cy="300" r="18" fill="#FFB020"/><text x="550" y="340" text-anchor="middle" fill="#F4F7FF" font-size="14" font-family="Arial">L3</text><circle cx="750" cy="380" r="18" fill="#FFB020"/><text x="750" y="420" text-anchor="middle" fill="#F4F7FF" font-size="14" font-family="Arial">L4</text><circle cx="950" cy="340" r="18" fill="#FFB020"/><text x="950" y="380" text-anchor="middle" fill="#F4F7FF" font-size="14" font-family="Arial">L5</text>
+<text x="40" y="40" fill="#F4F7FF" font-size="28" font-family="Arial">ACT I ROUTES</text>
+</svg>
