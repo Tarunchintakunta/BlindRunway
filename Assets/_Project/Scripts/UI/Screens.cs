@@ -317,10 +317,68 @@ namespace BlindRunway
         }
 
         // Full-bleed role card before each flight.
+        bool soloIntroSeen; // once per app session
+
+        // Solo: all three seats on one screen before the first solo flight; later flights skip straight in.
+        void SoloIntro()
+        {
+            var s = App.I.Session;
+            var r = Clear();
+            Stars(r, 40);
+            if (soloIntroSeen)
+            {
+                Ui.Place(Ui.Pulsing(Ui.Label(r, "TAKING OFF...", 44, Tokens.TextMuted, TextAnchor.MiddleCenter, FontStyle.Bold)), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(800, 60));
+                s.Act("gotit");
+                return;
+            }
+            var lvl = s.Def != null ? $"LEVEL {s.Def.number:00}  -  {s.Def.title.ToUpperInvariant()}" : "";
+            Ui.Place(Ui.Label(r, lvl, 26, Tokens.TextMuted, TextAnchor.MiddleCenter, FontStyle.Bold), new Vector2(0.5f, 1), new Vector2(0, -60), new Vector2(1200, 40));
+            Ui.Place(Ui.Label(r, "YOU HOLD ALL THREE SEATS", 60, Tokens.TextPrimary, TextAnchor.MiddleCenter, FontStyle.Bold), new Vector2(0.5f, 1), new Vector2(0, -120), new Vector2(1600, 80));
+            Ui.Place(Ui.Label(r, "Only one seat acts at a time. The others wait until you switch: F1 / F2 / F3 or the bar at the bottom.", 26, Tokens.Amber), new Vector2(0.5f, 1), new Vector2(0, -185), new Vector2(1600, 40));
+            for (int i = 0; i < 3; i++)
+            {
+                var role = (Role)i;
+                var tint = Roles.Tint(role);
+                var card = Ui.Img(r, Tokens.BgPanel);
+                Ui.Place(card, new Vector2(0.5f, 0.5f), new Vector2((i - 1) * 560, -40), new Vector2(520, 520));
+                Ui.In(card, 0.1f + i * 0.08f);
+                var t = card.transform;
+                Ui.Place(Ui.Img(t, tint), new Vector2(0.5f, 1), Vector2.zero, new Vector2(520, 10));
+                Ui.Place(Ui.Label(t, $"F{i + 1}   {Roles.Names[i]}", 44, tint, TextAnchor.UpperLeft, FontStyle.Bold), new Vector2(0, 1), new Vector2(30, -36), new Vector2(470, 60));
+                Ui.Place(Ui.Label(t, Roles.Taglines[i], 24, Tokens.TextPrimary, TextAnchor.UpperLeft), new Vector2(0, 1), new Vector2(30, -104), new Vector2(460, 70));
+                var tips = "";
+                foreach (var c in Roles.Can[i]) tips += "+  " + c + "\n";
+                foreach (var c in Roles.Cannot[i]) tips += "-  " + c + "\n";
+                var b = Ui.Label(t, tips, 24, Tokens.TextMuted, TextAnchor.UpperLeft);
+                b.lineSpacing = 1.3f;
+                Ui.Place(b, new Vector2(0, 1), new Vector2(30, -190), new Vector2(460, 200));
+                Ui.Place(Ui.Label(t, Roles.ControlsLine[i], 20, Tokens.TextMuted, TextAnchor.LowerLeft), new Vector2(0, 0), new Vector2(30, 24), new Vector2(460, 70));
+            }
+            Button go = null;
+            go = Ui.Btn(r, "GOT IT - FLY", () =>
+            {
+                soloIntroSeen = true;
+                go.interactable = false;
+                s.Act("gotit");
+            });
+            Ui.Place(go, new Vector2(1, 0), new Vector2(-48, 48), new Vector2(380, 84));
+            var skip = Ui.Btn(r, "SKIP", () =>
+            {
+                soloIntroSeen = true;
+                s.Act("gotit");
+            }, Tokens.BgPanel);
+            Ui.Place(skip, new Vector2(1, 0), new Vector2(-448, 48), new Vector2(200, 84));
+        }
+
         public void RoleIntro()
         {
             var s = App.I.Session;
-            var role = s.Lobby.Solo ? Role.Pilot : s.MyRole;
+            if (s.Lobby.Solo)
+            {
+                SoloIntro();
+                return;
+            }
+            var role = s.MyRole;
             var r = Clear();
             if (role == Role.None)
             {
@@ -355,8 +413,6 @@ namespace BlindRunway
             Ui.Place(no, new Vector2(0.5f, 0.5f), new Vector2(380, -200), new Vector2(900, 80));
             var keys = Ui.Label(r, Roles.ControlsLine[i], 22, Tokens.TextMuted, TextAnchor.UpperLeft);
             Ui.Place(keys, new Vector2(0.5f, 0.5f), new Vector2(380, -290), new Vector2(900, 60));
-            if (s.Lobby.Solo)
-                Ui.Place(Ui.Label(r, "SOLO TEST: F1 Pilot  F2 Navigator  F3 Cabin once airborne", 22, Tokens.Amber, TextAnchor.UpperLeft), new Vector2(0.5f, 0.5f), new Vector2(380, -340), new Vector2(900, 40));
 
             Button got = null;
             got = Ui.Btn(r, "GOT IT", () =>
