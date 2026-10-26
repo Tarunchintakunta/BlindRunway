@@ -44,7 +44,7 @@ namespace BlindRunway
             {
                 Play,
                 () => LevelSelect(),
-                () => App.I.Toast("Settings arrive soon."),
+                () => App.I.Overlay.Settings(null),
                 Application.Quit,
             };
             for (int i = 0; i < labels.Length; i++)

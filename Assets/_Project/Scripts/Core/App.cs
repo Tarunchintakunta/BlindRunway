@@ -12,6 +12,7 @@ namespace BlindRunway
         public Session Session;
         public World World;
         public Hud Hud;
+        public Overlay Overlay;
         Text toast;
         float toastUntil;
 
@@ -40,6 +41,7 @@ namespace BlindRunway
             World = gameObject.AddComponent<World>();
             Hud = gameObject.AddComponent<Hud>();
             gameObject.AddComponent<AudioBus>();
+            Overlay = gameObject.AddComponent<Overlay>();
             Screens = gameObject.AddComponent<Screens>();
             Session.Changed += Screens.Route;
         }

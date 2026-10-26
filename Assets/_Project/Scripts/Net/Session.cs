@@ -156,6 +156,7 @@ namespace BlindRunway
 
         public void Leave(string why = null)
         {
+            App.I.Overlay.Close();
             Phase = srvPhase = Phase.Menu;
             Net.Shutdown();
             Lobby = new LobbyState();
