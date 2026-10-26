@@ -1,4 +1,4 @@
-# Blind Runway
+# BlindRunway
 
 3-player asymmetric co-op airplane game (BOMBANANA-style roles + Dear Passengers chaos).
 
