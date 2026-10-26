@@ -6,6 +6,9 @@ namespace BlindRunway
 {
     public enum Phase { Menu, Lobby, Intro, Playing, Result }
 
+    // Multiplayer: three clients, one seat each. Solo: one human on a host-only server holding all three seats.
+    public enum MatchMode { Multiplayer, Solo }
+
     [Serializable]
     public class LobbyState
     {
@@ -14,7 +17,8 @@ namespace BlindRunway
         public int players;
         public int level;
         public string code = "";
-        public bool solo; // dev test: host holds every seat and flips views with F1-F3
+        public MatchMode mode;
+        public bool Solo => mode == MatchMode.Solo;
     }
 
     [Serializable]
@@ -69,7 +73,7 @@ namespace BlindRunway
             get
             {
                 if (Net.NM == null || !Net.Running) return Role.None;
-                if (Lobby.solo) return SoloView;
+                if (Lobby.Solo) return SoloView;
                 return (Role)Array.IndexOf(Lobby.seat, (long)Net.NM.LocalClientId);
             }
         }
@@ -105,7 +109,7 @@ namespace BlindRunway
             if (Net.IsServer && srvPhase == Phase.Playing && match != null) ServerTick(Time.deltaTime);
             if (Net.IsServer && srvPhase == Phase.Intro && (introT += Time.deltaTime) > IntroTimeout) BeginFlight();
             if (Phase != Phase.Playing) return;
-            if (Lobby.solo)
+            if (Lobby.Solo)
             {
                 var view = Input.GetKeyDown(KeyCode.F1) ? Role.Pilot : Input.GetKeyDown(KeyCode.F2) ? Role.Navigator
                     : Input.GetKeyDown(KeyCode.F3) ? Role.Cabin : SoloView;
@@ -149,7 +153,7 @@ namespace BlindRunway
                 return;
             }
             for (int i = 0; i < 3; i++) srv.seat[i] = (long)NetworkManager.ServerClientId;
-            srv.solo = true;
+            srv.mode = MatchMode.Solo;
             StartMatch();
         }
 
@@ -261,7 +265,7 @@ namespace BlindRunway
                 case "solo":
                     if (!IsHostSender(sender) || srvPhase != Phase.Lobby || srv.players != 1) return;
                     for (int i = 0; i < 3; i++) srv.seat[i] = (long)sender;
-                    srv.solo = true;
+                    srv.mode = MatchMode.Solo;
                     StartMatch();
                     return;
                 case "gotit":
@@ -281,8 +285,8 @@ namespace BlindRunway
                     return;
                 case "lobby":
                     if (!IsHostSender(sender) || srvPhase != Phase.Result) return;
-                    if (srv.solo) srv.seat = new long[] { -1, -1, -1 };
-                    srv.solo = false;
+                    if (srv.Solo) srv.seat = new long[] { -1, -1, -1 };
+                    srv.mode = MatchMode.Multiplayer;
                     SetPhase(Phase.Lobby, null);
                     return;
                 case "start":
@@ -300,16 +304,17 @@ namespace BlindRunway
         {
             if (!Net.IsServer || srvPhase != Phase.Playing) return;
             var m = JsonUtility.FromJson<InputMsg>(json);
-            var role = srv.solo ? (Role)m.role : (Role)Array.IndexOf(srv.seat, (long)sender);
-            if (srv.solo && !IsHostSender(sender)) return;
+            var role = srv.Solo ? (Role)m.role : (Role)Array.IndexOf(srv.seat, (long)sender);
+            if (srv.Solo && !IsHostSender(sender)) return;
             if (role < Role.Pilot || role > Role.Cabin) return;
             if (m.say != null && m.say.Length > 40) m.say = m.say.Substring(0, 40);
             InputReceived?.Invoke(role, m);
         }
 
-        // Exactly three connected players, every seat taken, everyone ready.
+        // Multiplayer: exactly three connected players, every seat taken, everyone ready. Solo: always.
         public static bool CanStart(LobbyState L)
         {
+            if (L.Solo) return true;
             if (L.players != Net.MaxPlayers) return false;
             for (int i = 0; i < 3; i++)
                 if (L.seat[i] == -1 || !L.ready[i]) return false;
@@ -363,7 +368,7 @@ namespace BlindRunway
 
         void SendSnapshots()
         {
-            if (srv.solo)
+            if (srv.Solo)
             {
                 Net.Send(NetworkManager.ServerClientId, Msg.Snap, match.SnapshotFor(Role.None));
                 return;

@@ -320,7 +320,7 @@ namespace BlindRunway
         public void RoleIntro()
         {
             var s = App.I.Session;
-            var role = s.Lobby.solo ? Role.Pilot : s.MyRole;
+            var role = s.Lobby.Solo ? Role.Pilot : s.MyRole;
             var r = Clear();
             if (role == Role.None)
             {
@@ -355,7 +355,7 @@ namespace BlindRunway
             Ui.Place(no, new Vector2(0.5f, 0.5f), new Vector2(380, -200), new Vector2(900, 80));
             var keys = Ui.Label(r, Roles.ControlsLine[i], 22, Tokens.TextMuted, TextAnchor.UpperLeft);
             Ui.Place(keys, new Vector2(0.5f, 0.5f), new Vector2(380, -290), new Vector2(900, 60));
-            if (s.Lobby.solo)
+            if (s.Lobby.Solo)
                 Ui.Place(Ui.Label(r, "SOLO TEST: F1 Pilot  F2 Navigator  F3 Cabin once airborne", 22, Tokens.Amber, TextAnchor.UpperLeft), new Vector2(0.5f, 0.5f), new Vector2(380, -340), new Vector2(900, 40));
 
             Button got = null;
