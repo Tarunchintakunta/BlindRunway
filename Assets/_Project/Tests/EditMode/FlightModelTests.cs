@@ -90,6 +90,19 @@ namespace BlindRunway.Tests
             Assert.Greater(b.pitch, a.pitch);
         }
 
+        // Level 05 budget: even the worst case (gear + flaps down from the start) must land with fuel left.
+        [Test]
+        public void ShortFinalFuelIsTightButEnough()
+        {
+            var f = new FlightModel(new Vector3(0, 460, -14000), 70, 2, 190, 1500);
+            f.Step(new InputMsg { gear = true, flaps = true }, Dt);
+            FlyApproach(f, 2);
+            Assert.IsNull(f.crash);
+            Assert.IsTrue(f.stopped);
+            Assert.Greater(f.fuel, 0.02f);
+            Assert.Less(f.fuel, 0.5f);
+        }
+
         [Test]
         public void CrosswindDriftsRight()
         {

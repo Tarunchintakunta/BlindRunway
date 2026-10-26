@@ -86,5 +86,16 @@ namespace BlindRunway.Tests
             Assert.AreEqual("BELLY LANDER", r.cards[0].title);
             Assert.AreEqual("SILENT TREATMENT", r.cards[1].title);
         }
+
+        [Test]
+        public void FuelCallRequiredOnlyWhenLevelSaysSo()
+        {
+            var m = NewMatch();
+            m.L.fuelCallRequired = true;
+            StopAt(m, 800);
+            Assert.AreEqual("no-fuel-call", LevelRules.Check(m).reason);
+            m.AddCallout(Role.Navigator, "FUEL 23 PERCENT");
+            Assert.IsTrue(LevelRules.Check(m).win);
+        }
     }
 }

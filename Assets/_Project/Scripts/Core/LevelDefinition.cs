@@ -40,6 +40,7 @@ namespace BlindRunway
         public float requiredSecure;   // 0..1 share of strapped passengers + secured cargo
         public int requiredCrates = 1;
         public float maxPanic = 1f;
+        public bool fuelCallRequired;  // Navigator must read the fuel out at least once
         public string[] objectives = new string[0];
         public string[] coachMarks = new string[0]; // "Pilot: ..." / "Navigator: ..." / "Cabin: ..." / "All: ..."
     }

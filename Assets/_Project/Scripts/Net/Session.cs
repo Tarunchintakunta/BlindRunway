@@ -310,6 +310,7 @@ namespace BlindRunway
         void EndMatch(ResultMsg r)
         {
             r.level = srv.level;
+            r.campaignClear = r.win && srv.level == Levels.Count - 1;
             SendSnapshots(); // final frame for the freeze-frame
             Net.ToAll(Msg.Result, r);
             match = null;

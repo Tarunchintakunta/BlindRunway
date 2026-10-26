@@ -57,6 +57,7 @@ namespace BlindRunway
         public readonly int[] Said = new int[3];
         public int SayAgain;
         public float PeakPanic, GlitchTrust;
+        public bool FuelCalled;
 
         readonly InputMsg pilot = new InputMsg();
         bool gearReq, flapsReq;
@@ -110,6 +111,7 @@ namespace BlindRunway
             Callouts.Add(new Callout { seq = ++seq, from = from, text = text });
             if (from >= Role.Pilot) Said[(int)from]++;
             if (from == Role.Pilot && text == Controls.PilotCallouts[0]) SayAgain++;
+            if (from == Role.Navigator && text.StartsWith("FUEL")) FuelCalled = true;
             if (Callouts.Count > 6) Callouts.RemoveAt(0);
         }
 

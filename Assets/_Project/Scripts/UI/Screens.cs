@@ -253,7 +253,19 @@ namespace BlindRunway
                 Ui.Place(Ui.Label(t, c.title, 32, Tokens.TextPrimary, TextAnchor.UpperLeft, FontStyle.Bold), new Vector2(0, 1), new Vector2(24, -62), new Vector2(390, 80));
                 Ui.Place(Ui.Label(t, c.body, 24, Tokens.TextMuted, TextAnchor.UpperLeft), new Vector2(0, 1), new Vector2(24, -150), new Vector2(390, 110));
             }
+            if (res.campaignClear) CampaignClear(r);
             ResultButtons(r, res);
+        }
+
+        static void CampaignClear(Transform r)
+        {
+            var badge = Ui.Img(r, Tokens.Cabin);
+            Ui.Place(badge, new Vector2(0, 1), new Vector2(48, -48), new Vector2(460, 120));
+            Ui.In(badge, 1.2f);
+            Ui.Place(Ui.Label(badge.transform, "CAMPAIGN CLEAR", 34, Tokens.BgVoid, TextAnchor.MiddleCenter, FontStyle.Bold), new Vector2(0.5f, 1), new Vector2(0, -14), new Vector2(440, 46));
+            Ui.Place(Ui.Label(badge.transform, "ACT I", 26, Tokens.BgVoid, TextAnchor.MiddleCenter, FontStyle.Bold), new Vector2(0.5f, 0), new Vector2(0, 14), new Vector2(440, 40));
+            var teaser = Ui.Label(r, "Coming soon: routes 6-30. Sandstorms, volcanic ash, a VIP meltdown.", 24, Tokens.TextMuted, TextAnchor.UpperLeft);
+            Ui.Place(teaser, new Vector2(0, 1), new Vector2(48, -184), new Vector2(560, 70));
         }
 
         // Tasteful, not casino: 36 flakes, once.

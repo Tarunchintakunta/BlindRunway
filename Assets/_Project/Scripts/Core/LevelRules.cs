@@ -18,6 +18,7 @@ namespace BlindRunway
         public int stars;
         public string reason = "";
         public BlameCard[] cards = new BlameCard[0];
+        public bool campaignClear;
     }
 
     public static class LevelRules
@@ -49,6 +50,7 @@ namespace BlindRunway
             if (m.Cabin.Secure < L.requiredSecure) return "cabin";
             if (m.Cabin.fireOn) return "fire";
             if (m.Cabin.Panic > L.maxPanic) return "panic";
+            if (L.fuelCallRequired && !m.FuelCalled) return "no-fuel-call";
             return null;
         }
 
@@ -67,6 +69,7 @@ namespace BlindRunway
                 case "cargo": return "Landed with the cargo loose.";
                 case "cabin": return "Too many passengers unbuckled.";
                 case "fire": return "Landed with the cabin on fire.";
+                case "no-fuel-call": return "Nobody called the fuel. Procedure says that's a fail.";
                 default: return "Landed. Somehow.";
             }
         }
@@ -85,6 +88,7 @@ namespace BlindRunway
                 case "runway-excursion": main = Card(Role.Pilot, "THROTTLE ROMANTIC", "Never let go of the throttle. Neither did the plane."); break;
                 case "missed-gate": main = Card(Role.Pilot, "OVERSHOOT ARTIST", "Parked outside the box. Ground crew is walking over. Slowly."); break;
                 case "fuel": main = Card(Role.Navigator, "FUEL? NEVER HEARD OF HER", "The gauge said empty for a while. Nobody read it out."); break;
+                case "no-fuel-call": main = Card(Role.Navigator, "GAUGE WHISPERER", "Saw the fuel the whole time. Kept it a secret."); break;
                 case "timer": main = Card(Role.Navigator, "SCENIC TOUR GUIDE", "Out of time. The passengers have missed three connections."); break;
                 case "panic": main = Card(Role.Cabin, "MUTINY MANAGER", "Panic hit 100%. A passenger is now holding the drinks cart hostage."); break;
                 case "cargo": main = Card(Role.Cabin, "CARGO LIBERATOR", "The cargo was free-range at touchdown."); break;

@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c015437e9db14b348646eee59e52a548, type: 3}
+  m_Name: L05
+  m_EditorClassIdentifier: 
+  number: 5
+  title: 'Short Final Circus'
+  brief: 'Short runway, rain, crosswind, a galley fire and barely enough fuel. Everything at once, still fair.'
+  timeLimit: 450.0
+  startDistance: 14000.0
+  startAltitude: 460.0
+  startSpeed: 70.0
+  runwayLength: 1500.0
+  gateStart: 600.0
+  gateEnd: 1400.0
+  crosswind: 2.0
+  fogDensity: 0.001
+  rain: 1
+  fuelSeconds: 190.0
+  passengers: 6
+  crates: 2
+  crateLabel: 'CRATE'
+  cargoShiftsCog: 0
+  demanding: 0
+  spiral: 0
+  fireAt: 100.0
+  glitchStarts: []
+  glitchSeconds: 8.0
+  requiredSecure: 0.0
+  requiredCrates: 1
+  maxPanic: 0.8
+  fuelCallRequired: 1
+  objectives:
+  - 'Gear and flaps set'
+  - 'Extinguish the galley fire'
+  - 'Secure at least 1 crate'
+  - 'Panic under 80%'
+  - 'Navigator calls the fuel once'
+  - 'Stop inside the short gate box'
+  coachMarks:
+  - 'Navigator: fuel is tight. Press B to call it at least once.'
+  - 'Cabin: a fire starts in the galley mid-flight. Put it out (hold E).'
+  - 'Pilot: short runway. Touch down early and cut the throttle the moment you land.'

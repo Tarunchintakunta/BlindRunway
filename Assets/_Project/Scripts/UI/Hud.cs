@@ -180,6 +180,15 @@ namespace BlindRunway
             listen = Ui.Pulsing(Ui.Label(root, "LISTEN TO NAV", 72, Tokens.Amber, TextAnchor.MiddleCenter, FontStyle.Bold));
             Ui.Place(listen, new Vector2(0.5f, 0.5f), new Vector2(0, 120), new Vector2(1200, 100));
 
+            if (level.rain)
+                for (int i = 0; i < 60; i++)
+                {
+                    var drop = Ui.Img(root, Tokens.TextPrimary.A(0.18f), null);
+                    Ui.Place(drop, new Vector2((float)rng.NextDouble(), 1), Vector2.zero, new Vector2(2, 40));
+                    drop.transform.localRotation = Quaternion.Euler(0, 0, -12);
+                    drop.gameObject.AddComponent<RainStreak>().offset = (float)rng.NextDouble();
+                }
+
             Hint("W/S  pitch   A/D  turn\nShift/Ctrl  throttle\n1 SAY AGAIN?  2 HOW HIGH?  3 COPY!", new Vector2(0, 0), new Vector2(48, 48), TextAnchor.LowerLeft);
         }
 
@@ -202,6 +211,19 @@ namespace BlindRunway
             listen.enabled = sinceNav > 20 && !s.onGround;
             if (s.onGround && !wasOnGround) App.I.World.Shake(0.8f);
             wasOnGround = s.onGround;
+        }
+    }
+
+    // Windshield rain: loops top to bottom with a slight slant.
+    public class RainStreak : MonoBehaviour
+    {
+        public float offset;
+
+        void Update()
+        {
+            var rt = (RectTransform)transform;
+            float t = Mathf.Repeat(Time.time * 0.9f + offset, 1f);
+            rt.anchoredPosition = new Vector2(t * 120, -t * 1200);
         }
     }
 }
