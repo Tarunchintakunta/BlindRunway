@@ -13,7 +13,7 @@ Levels 1–5 → Success/Fail with blame cards, unlock progression, pause/settin
 **Later:** levels 6–30 ([backlog](docs/BACKLOG-L06-L30.md)).
 
 ## Run it
-1. Unity Hub > install **Unity 6000.0 LTS** > **Add project from disk** > this folder.
+1. Unity Hub > install **Unity 6000.6.7f1** > **Add project from disk** > this folder.
 2. Press Play from `Assets/_Project/Scenes/Boot.unity` (any scene works; everything is built in code).
 3. Testing alone: **PLAY > HOST A FLIGHT > SOLO TEST**, then F1/F2/F3 to swap seats in flight.
 

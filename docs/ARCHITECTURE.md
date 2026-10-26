@@ -59,6 +59,8 @@ BlindRunway/
 - 60 fps target on integrated GPU
 
 ## As built (Act I)
+Editor: Unity 6000.6.7f1, Netcode for GameObjects 2.13.3 (2.1.1 does not compile on 6000.6).
+
 Where the shipped code differs from the plan above, and why:
 
 - **One scene, everything code-built.** `Boot.unity` is empty; `Bootstrap` (RuntimeInitializeOnLoadMethod)

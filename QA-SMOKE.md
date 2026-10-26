@@ -4,26 +4,34 @@
 
 | Check | Result |
 |---|---|
-| C# compiles | Yes, against hand-written Unity API stubs with .NET 8 (C# 9). Not yet compiled by the Unity editor. |
-| EditMode tests (`Assets/_Project/Tests/EditMode`) | 29 pass under the same stub harness (flight model incl. crosswind and L05 fuel budget, cabin, rules, blame cards, progression, glitch privacy, join codes). |
-| Playmode with 3 real clients | **Not run yet.** The Unity editor was not installed on the machine that wrote this code. |
+| Compiles in Unity | Yes. Unity **6000.6.7f1** batchmode, no errors or warnings from project code. |
+| EditMode tests (`Tests/EditMode`) | **30/30 pass** in Unity: flight model (incl. crosswind and the L05 fuel budget), cabin, rules, blame cards, progression, glitch privacy, join codes, and the real L01–L05 assets loading. |
+| PlayMode smoke (`Tests/PlayMode`) | **1/1 pass** in Unity: boot, host over Netcode, SOLO TEST, intro, flight with live snapshots, swap all three seats, leave. |
+| Three separate clients over the network | **Not run yet.** This needs three processes and a human at the controls (checklist below). |
 
 The commit `feat(net): seat ownership rules for role input` says "Playmode smoke: host + 2 clients reach
-lobby…". No smoke test was actually run when that line was written, so ignore it until someone runs the
-checklist below.
+lobby…". That claim was premature: no playmode run existed when it was written. The real-editor runs above
+came later.
+
+Re-run from a terminal:
+
+```bash
+U=/Applications/Unity/Hub/Editor/6000.6.7f1/Unity.app/Contents/MacOS/Unity
+$U -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testResults edit.xml -logFile -
+$U -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults play.xml -logFile -
+```
 
 ## First open
 
-1. Install **Unity 6000.0 LTS** through Unity Hub (6000.0.23f1 or newer 6000.0.x).
+1. Install **Unity 6000.6.7f1** (the version in `ProjectSettings/ProjectVersion.txt`) through Unity Hub.
 2. Unity Hub > **Add project from disk** > this repo's root folder.
-3. Wait for packages to resolve: Netcode for GameObjects 2.1.1, Unity Transport 2.3.0, URP 17.0.3,
-   uGUI 2.0, Test Framework.
+3. Wait for packages to resolve: Netcode for GameObjects 2.13.3, Unity Transport, URP 17.6, uGUI,
+   Test Framework (pinned in `Packages/packages-lock.json`).
 4. Optional: menu **Blind Runway > Setup URP Pipeline**. The game also renders on the built-in pipeline.
    Keep *Project Settings > Player > Active Input Handling* on **Input Manager (Old)** or **Both**.
 5. **Window > General > Test Runner > EditMode > Run All**. Expect all tests green.
 
-If the console shows compile errors, fix those first. Each one is a real bug, because the stub harness
-only knows the API surface it was given.
+Netcode 2.1.1 does not compile on 6000.6; 2.13.3 does. Don't downgrade.
 
 ## Solo smoke (one editor, 2 minutes)
 
