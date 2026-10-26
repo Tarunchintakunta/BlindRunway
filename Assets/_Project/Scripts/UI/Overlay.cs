@@ -100,7 +100,7 @@ namespace BlindRunway
         {
             change();
             BlindRunway.Settings.Save();
-            foreach (var s in FindObjectsByType<CanvasScaler>(FindObjectsSortMode.None))
+            foreach (var s in FindObjectsByType<CanvasScaler>())
                 s.referenceResolution = new Vector2(1920, 1080) / BlindRunway.Settings.UiScale;
             Settings(back);
         }
