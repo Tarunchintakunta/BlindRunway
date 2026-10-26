@@ -15,7 +15,7 @@ namespace BlindRunway
         public readonly List<Transform> Crates = new List<Transform>();
         readonly List<Renderer> crateStrap = new List<Renderer>();
         Transform inner, fire;
-        Light fireLight;
+        Light fireLight, lamp;
         Vector3 shownCrew;
         Role role = Role.None;
         LevelDefinition level;
@@ -194,7 +194,7 @@ namespace BlindRunway
                 Part(inner, new Vector3(-2.19f, 1.4f, 3 + i * 1.8f), new Vector3(0.05f, 0.5f, 0.5f), Tokens.BgVoid, 0, PrimitiveType.Cylinder); // portholes
                 Part(inner, new Vector3(2.19f, 1.4f, 3 + i * 1.8f), new Vector3(0.05f, 0.5f, 0.5f), Tokens.BgVoid, 0, PrimitiveType.Cylinder);
             }
-            var lamp = new GameObject("Lamp").AddComponent<Light>();
+            lamp = new GameObject("Lamp").AddComponent<Light>();
             lamp.type = LightType.Point;
             lamp.color = Tokens.Cabin;
             lamp.intensity = 2.2f;
@@ -274,6 +274,7 @@ namespace BlindRunway
                 fire.localScale = Vector3.one * (0.4f + s.fire * 1.2f) * flick;
                 fireLight.intensity = 3 * s.fire * flick;
             }
+            lamp.intensity = s.flicker && Mathf.PerlinNoise(Time.time * 12, 0) < 0.45f ? 0.2f : 2.2f; // emergency flicker
             App.I.Cam.transform.position = CabinCam;
             ApplyShake(App.I.Cam.transform, dt);
         }

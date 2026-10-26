@@ -39,7 +39,7 @@ namespace BlindRunway
         public Crate[] crates = new Crate[0];
         public float act;
         public string hint = "";
-        public bool fireOn;
+        public bool fireOn, flicker;
         public float fire;
         public Vector2 firePos;
     }
@@ -158,6 +158,7 @@ namespace BlindRunway
             s.pax = Cabin.pax.ToArray();
             s.crates = Cabin.crates.ToArray();
             s.fireOn = Cabin.fireOn;
+            s.flicker = Glitch;
             s.fire = Cabin.fire;
             s.firePos = Cabin.firePos;
             s.act = Cabin.act;
@@ -179,6 +180,12 @@ namespace BlindRunway
             s.loc = Mathf.Clamp(p.pos.x / 150f, -1, 1);
             s.gs = Mathf.Clamp((p.pos.y - PathHeight(p.pos.z)) / 40f, -1, 1);
             s.warnings = Warnings();
+            if (Glitch) // the fib: altimeter reads high, glideslope says "too high, dive"
+            {
+                s.glitch = true;
+                s.altFt += 700;
+                s.gs = Mathf.Clamp(s.gs + 0.8f, -1, 1);
+            }
         }
 
         Snapshot Base()

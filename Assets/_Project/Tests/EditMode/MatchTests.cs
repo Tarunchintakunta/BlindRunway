@@ -39,5 +39,21 @@ namespace BlindRunway.Tests
             m.Step(0.02f);
             Assert.IsTrue(m.Plane.gearDown);
         }
+
+        [Test]
+        public void GlitchWindowLiesToNavigatorOnly()
+        {
+            var L = ScriptableObject.CreateInstance<LevelDefinition>();
+            L.glitchStarts = new[] { 1f };
+            var m = new Match(L);
+            for (int k = 0; k < 75; k++) m.Step(0.02f); // t = 1.5 s, inside the window
+            Assert.IsTrue(m.Glitch);
+            var nav = m.SnapshotFor(Role.Navigator);
+            Assert.IsTrue(nav.glitch);
+            Assert.Greater(nav.altFt, m.Plane.AltFt + 600);
+            Assert.IsTrue(m.SnapshotFor(Role.Cabin).flicker);
+            for (int k = 0; k < 450; k++) m.Step(0.02f); // t = 10.5 s, window over
+            Assert.IsFalse(m.SnapshotFor(Role.Navigator).glitch);
+        }
     }
 }
