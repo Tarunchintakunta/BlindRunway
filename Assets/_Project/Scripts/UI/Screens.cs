@@ -502,7 +502,8 @@ namespace BlindRunway
                 Ui.Place(wait, new Vector2(1, 0), new Vector2(-48, 60), new Vector2(600, 50));
                 return;
             }
-            var lobby = Ui.Btn(r, "LOBBY", () => s.Act("lobby"), Tokens.BgPanel);
+            // Solo has no lobby to return to: MENU ends the session.
+            var lobby = s.Lobby.Solo ? Ui.Btn(r, "MENU", () => s.Leave(), Tokens.BgPanel) : Ui.Btn(r, "LOBBY", () => s.Act("lobby"), Tokens.BgPanel);
             Ui.Place(lobby, new Vector2(1, 0), new Vector2(-340, 48), new Vector2(260, 76));
             bool next = res.win && res.level + 1 <= Progress.Unlocked && res.level + 1 < Levels.Count;
             var retry = Ui.Btn(r, "RETRY", () => s.Act("retry"), next ? Tokens.BgPanel : Tokens.Cyan);

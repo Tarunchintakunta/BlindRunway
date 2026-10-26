@@ -270,8 +270,8 @@ namespace BlindRunway
                     if (srvPhase != Phase.Lobby || mine < 0) return;
                     srv.ready[mine] = !srv.ready[mine];
                     break;
-                case "solo":
-                    if (!IsHostSender(sender) || srvPhase != Phase.Lobby || srv.players != 1) return;
+                case "solo": // dev SOLO TEST from a lobby with nobody else in it
+                    if (!IsHostSender(sender) || srvPhase != Phase.Lobby || Net.PlayerCount != 1) return;
                     for (int i = 0; i < 3; i++) srv.seat[i] = (long)sender;
                     srv.mode = MatchMode.Solo;
                     StartMatch();
@@ -292,7 +292,7 @@ namespace BlindRunway
                     StartMatch();
                     return;
                 case "lobby":
-                    if (!IsHostSender(sender) || srvPhase != Phase.Result) return;
+                    if (!IsHostSender(sender) || srvPhase != Phase.Result || srv.Solo) return; // solo leaves via Leave()
                     if (srv.Solo) srv.seat = new long[] { -1, -1, -1 };
                     srv.mode = MatchMode.Multiplayer;
                     SetPhase(Phase.Lobby, null);

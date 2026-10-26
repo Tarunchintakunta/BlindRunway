@@ -43,13 +43,30 @@ namespace BlindRunway
 
         public void Pause()
         {
-            var p = Modal("PAUSED", 470);
-            Row(p, 0, Ui.Btn(p, "RESUME", Close));
-            Row(p, 1, Ui.Btn(p, "SETTINGS", () => Settings(Pause), Tokens.BgVoid));
-            Row(p, 2, Ui.Btn(p, "LEAVE FLIGHT", () =>
+            var s = App.I.Session;
+            bool solo = s.Lobby.Solo;
+            var p = Modal("PAUSED", solo ? 560 : 470);
+            int row = 0;
+            Row(p, row++, Ui.Btn(p, "RESUME", Close));
+            if (solo && s.Phase == Phase.Playing)
+            {
+                for (int i = 0; i < 3; i++) // switch seat
+                {
+                    var seat = (Role)i;
+                    var b = Ui.Btn(p, Roles.Names[i], () =>
+                    {
+                        s.SwitchSeat(seat);
+                        Close();
+                    }, seat == s.MyRole ? Roles.Tint(seat) : Tokens.BgVoid);
+                    Ui.Place(b, new Vector2(0.5f, 1), new Vector2((i - 1) * 176, -120 - row * 92), new Vector2(164, 72));
+                }
+                row++;
+            }
+            Row(p, row++, Ui.Btn(p, "SETTINGS", () => Settings(Pause), Tokens.BgVoid));
+            Row(p, row, Ui.Btn(p, solo ? "QUIT TO MENU" : "LEAVE FLIGHT", () =>
             {
                 Close();
-                App.I.Session.Leave("You left the flight.");
+                s.Leave(solo ? null : "You left the flight.");
             }, Tokens.Danger));
             var note = Ui.Label(p, "The plane keeps flying while you're here.", 22, Tokens.TextMuted);
             Ui.Place(note, new Vector2(0.5f, 0), new Vector2(0, 24), new Vector2(600, 30));
