@@ -39,6 +39,7 @@ namespace BlindRunway
             Session = gameObject.AddComponent<Session>();
             World = gameObject.AddComponent<World>();
             Hud = gameObject.AddComponent<Hud>();
+            gameObject.AddComponent<AudioBus>();
             Screens = gameObject.AddComponent<Screens>();
             Session.Changed += Screens.Route;
         }
