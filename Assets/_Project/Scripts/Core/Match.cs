@@ -30,6 +30,14 @@ namespace BlindRunway
         public float loc, gs;          // -1..1, + = right of centerline / above the 3 deg path
         public bool glitch;
         public string warnings = "";   // '|' separated
+
+        // Everyone: cabin summary. Cabin only: the cabin itself.
+        public float panic, secure;
+        public bool cabin;
+        public Vector2 crew;
+        public Passenger[] pax = new Passenger[0];
+        public float act;
+        public string hint = "";
     }
 
     // Server-side simulation of one level attempt.
@@ -37,6 +45,7 @@ namespace BlindRunway
     {
         public readonly LevelDefinition L;
         public readonly FlightModel Plane;
+        public readonly CabinSim Cabin;
         public float T;
         public readonly List<Callout> Callouts = new List<Callout>();
 
@@ -50,6 +59,17 @@ namespace BlindRunway
             L = level;
             Plane = new FlightModel(new Vector3(0, L.startAltitude, -L.startDistance), L.startSpeed,
                 L.crosswind, L.fuelSeconds, L.runwayLength);
+            Cabin = new CabinSim(L);
+        }
+
+        public bool Glitch
+        {
+            get
+            {
+                foreach (var g in L.glitchStarts)
+                    if (T >= g && T < g + L.glitchSeconds) return true;
+                return false;
+            }
         }
 
         public float TimeLeft => Mathf.Max(0, L.timeLimit - T);
@@ -65,6 +85,9 @@ namespace BlindRunway
                     pilot.throttle = Mathf.Clamp(m.throttle, -1, 1);
                     gearReq |= m.gear;
                     flapsReq |= m.flaps;
+                    break;
+                case Role.Cabin:
+                    Cabin.Apply(m);
                     break;
                 case Role.Navigator:
                     if (m.ping == 1) pingGearUntil = T + 3;
@@ -86,6 +109,7 @@ namespace BlindRunway
             pilot.flaps = flapsReq;
             gearReq = flapsReq = false;
             Plane.Step(pilot, dt);
+            Cabin.Step(dt, Plane, Glitch);
         }
 
         // Ideal height on a 3 deg path to a touchdown point 300 m past the threshold.
@@ -109,7 +133,17 @@ namespace BlindRunway
         {
             var s = Base();
             if (r == Role.Navigator || r == Role.None) FillInstruments(s);
+            if (r == Role.Cabin || r == Role.None) FillCabin(s);
             return s;
+        }
+
+        void FillCabin(Snapshot s)
+        {
+            s.cabin = true;
+            s.crew = Cabin.crew;
+            s.pax = Cabin.pax.ToArray();
+            s.act = Cabin.act;
+            s.hint = Cabin.hint;
         }
 
         void FillInstruments(Snapshot s)
@@ -146,6 +180,8 @@ namespace BlindRunway
                 pingGear = T < pingGearUntil,
                 pingFlaps = T < pingFlapsUntil,
                 callouts = Callouts.ToArray(),
+                panic = Cabin.Panic,
+                secure = Cabin.Secure,
             };
         }
     }

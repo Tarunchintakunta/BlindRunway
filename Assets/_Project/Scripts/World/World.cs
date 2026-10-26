@@ -9,6 +9,10 @@ namespace BlindRunway
     {
         Transform root;
         Transform plane;
+        Transform cabin, crew;
+        public readonly List<Transform> Pax = new List<Transform>();
+        readonly List<Renderer> paxBody = new List<Renderer>();
+        Vector3 shownCrew;
         Role role = Role.None;
         LevelDefinition level;
         Vector3 shownPos;
@@ -24,6 +28,7 @@ namespace BlindRunway
             level = L;
             root = new GameObject("World").transform;
             if (r == Role.Pilot) BuildPilot();
+            else if (r == Role.Cabin) BuildCabin();
             else
             {
                 RenderSettings.fog = false;
@@ -34,7 +39,9 @@ namespace BlindRunway
         public void Clear()
         {
             if (root) Destroy(root.gameObject);
-            root = plane = null;
+            root = plane = cabin = crew = null;
+            Pax.Clear();
+            paxBody.Clear();
             role = Role.None;
             RenderSettings.fog = false;
             ResetCamera();
@@ -113,7 +120,84 @@ namespace BlindRunway
             var snap = App.I.Session.Snap;
             if (snap == null || root == null) return;
             if (role == Role.Pilot) UpdatePilot(snap, Time.deltaTime);
+            if (role == Role.Cabin) UpdateCabin(snap, Time.deltaTime);
         }
+
+        // ---- cabin: warm tube of chaos, tilts with the plane ----
+
+        void BuildCabin()
+        {
+            RenderSettings.fog = false;
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.35f, 0.3f, 0.25f);
+            cabin = new GameObject("Cabin").transform;
+            cabin.SetParent(root);
+            var inner = new GameObject("Inner").transform; // pivot at cabin middle
+            inner.SetParent(cabin, false);
+            inner.localPosition = new Vector3(0, 0, -8);
+
+            Part(inner, new Vector3(0, -0.1f, 8), new Vector3(4.4f, 0.2f, 16.4f), Tokens.Hex(0x3A2E2A));
+            Part(inner, new Vector3(0, 0.01f, 8), new Vector3(0.9f, 0.02f, 16), Tokens.Hex(0x7A2E3A));          // aisle carpet
+            Part(inner, new Vector3(-2.3f, 1.2f, 8), new Vector3(0.2f, 2.4f, 16.4f), Tokens.Hex(0xD9D2C3));
+            Part(inner, new Vector3(2.3f, 1.2f, 8), new Vector3(0.2f, 2.4f, 16.4f), Tokens.Hex(0xD9D2C3));
+            Part(inner, new Vector3(0, 1.2f, 16.3f), new Vector3(4.4f, 2.4f, 0.2f), Tokens.Hex(0xB8B0A0));
+            for (int i = 0; i < 8; i++)
+            {
+                Part(inner, new Vector3(-2.19f, 1.4f, 3 + i * 1.8f), new Vector3(0.05f, 0.5f, 0.5f), Tokens.BgVoid, 0, PrimitiveType.Cylinder); // portholes
+                Part(inner, new Vector3(2.19f, 1.4f, 3 + i * 1.8f), new Vector3(0.05f, 0.5f, 0.5f), Tokens.BgVoid, 0, PrimitiveType.Cylinder);
+            }
+            var lamp = new GameObject("Lamp").AddComponent<Light>();
+            lamp.type = LightType.Point;
+            lamp.color = Tokens.Cabin;
+            lamp.intensity = 2.2f;
+            lamp.range = 22;
+            lamp.transform.SetParent(inner, false);
+            lamp.transform.localPosition = new Vector3(0, 2.2f, 8);
+
+            var seat = Tokens.Hex(0x2E4A7A);
+            int seats = Mathf.Max(8, level.passengers + level.passengers % 2);
+            for (int i = 0; i < seats; i++)
+            {
+                var at = new Vector3(i % 2 == 0 ? -1.3f : 1.3f, 0, 3 + (i / 2) * 1.8f);
+                Part(inner, at + new Vector3(0, 0.25f, 0), new Vector3(0.9f, 0.5f, 0.8f), seat);
+                Part(inner, at + new Vector3(0, 0.75f, -0.45f), new Vector3(0.9f, 1f, 0.15f), seat);
+                if (i >= level.passengers) continue;
+                var p = Part(inner, at + new Vector3(0, 0.9f, 0), new Vector3(0.55f, 0.45f, 0.55f), Tokens.Hex(0xC9B8A6), 0, PrimitiveType.Capsule);
+                var head = Part(p.transform, new Vector3(0, 1.4f, 0), new Vector3(0.9f, 0.9f, 0.9f), Tokens.Hex(0xF0C8A0), 0, PrimitiveType.Sphere);
+                Pax.Add(head.transform);
+                paxBody.Add(p.GetComponent<Renderer>());
+            }
+
+            crew = Part(inner, new Vector3(0, 0.9f, 1), new Vector3(0.6f, 0.9f, 0.6f), Tokens.Cabin, 0.4f, PrimitiveType.Capsule).transform;
+            Part(crew, new Vector3(0, 1.1f, 0), new Vector3(1.1f, 0.25f, 1.1f), Tokens.Danger, 0, PrimitiveType.Cylinder); // hat
+            shownCrew = crew.localPosition;
+
+            var cam = App.I.Cam;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = Tokens.Hex(0x1A1410);
+            cam.transform.position = CabinCam;
+            cam.transform.rotation = Quaternion.Euler(52, 0, 0);
+        }
+
+        void UpdateCabin(Snapshot s, float dt)
+        {
+            if (!s.cabin) return;
+            cabin.rotation = Quaternion.Slerp(cabin.rotation, Quaternion.Euler(-s.pitch * 1.5f, 0, s.roll * 0.6f), 1 - Mathf.Exp(-4 * dt));
+            shownCrew = Vector3.Lerp(shownCrew, new Vector3(s.crew.x, 0.9f, s.crew.y), 1 - Mathf.Exp(-15 * dt));
+            crew.localPosition = shownCrew;
+            for (int i = 0; i < paxBody.Count && i < s.pax.Length; i++)
+            {
+                var p = s.pax[i];
+                paxBody[i].material.color = Color.Lerp(p.strapped ? Tokens.Hex(0x6E8FB8) : Tokens.Hex(0xC9B8A6), Tokens.Danger, p.panic);
+                var body = paxBody[i].transform;
+                float wobble = p.panic > 0.5f ? Mathf.Sin(Time.time * 25 + i) * p.panic * 0.08f : 0;
+                body.localPosition = new Vector3(p.seat.x + wobble, 0.9f, p.seat.y);
+            }
+            App.I.Cam.transform.position = CabinCam;
+            ApplyShake(App.I.Cam.transform, dt);
+        }
+
+        static readonly Vector3 CabinCam = new Vector3(0, 11, -9);
 
         void UpdatePilot(Snapshot s, float dt)
         {

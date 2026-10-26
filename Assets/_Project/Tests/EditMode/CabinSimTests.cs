@@ -1,0 +1,65 @@
+using NUnit.Framework;
+using UnityEngine;
+
+namespace BlindRunway.Tests
+{
+    public class CabinSimTests
+    {
+        const float Dt = 0.02f;
+
+        static LevelDefinition Level(int passengers = 2, int demanding = 0)
+        {
+            var L = ScriptableObject.CreateInstance<LevelDefinition>();
+            L.passengers = passengers;
+            L.demanding = demanding;
+            L.crates = 0;
+            return L;
+        }
+
+        static FlightModel Cruise() => new FlightModel(new Vector3(0, 460, -9000), 70, 0, 600, 2400);
+
+        // Walk the crew to a point, then hold E for a while.
+        static void WalkAndHold(CabinSim c, FlightModel f, Vector2 to, float holdSeconds)
+        {
+            for (int k = 0; k < 600 && Vector2.Distance(c.crew, to) > 0.6f; k++)
+            {
+                var d = (to - c.crew).normalized;
+                c.Apply(new InputMsg { moveX = d.x, moveZ = d.y });
+                c.Step(Dt, f, false);
+            }
+            c.Apply(new InputMsg { interact = true });
+            for (float t = 0; t < holdSeconds; t += Dt) c.Step(Dt, f, false);
+            c.Apply(new InputMsg());
+        }
+
+        [Test]
+        public void HoldingEStrapsNearestPassenger()
+        {
+            var c = new CabinSim(Level());
+            var f = Cruise();
+            Assert.AreEqual(0f, c.Secure, 0.001f);
+            WalkAndHold(c, f, c.pax[0].seat, 1.5f);
+            Assert.IsTrue(c.pax[0].strapped);
+            Assert.AreEqual(0.5f, c.Secure, 0.001f);
+        }
+
+        [Test]
+        public void IgnoredDemandingPassengerPanicsBelow1000Ft()
+        {
+            var c = new CabinSim(Level(2, 1));
+            var low = new FlightModel(new Vector3(0, 200, -3000), 70, 0, 600, 2400);
+            for (float t = 0; t < 20; t += Dt) c.Step(Dt, low, false);
+            Assert.Greater(c.pax[0].panic, 0.9f);
+            Assert.Less(c.pax[1].panic, 0.3f);
+        }
+
+        [Test]
+        public void ServingClearsDemand()
+        {
+            var c = new CabinSim(Level(2, 1));
+            WalkAndHold(c, Cruise(), c.pax[0].seat, 1.5f);
+            Assert.IsFalse(c.pax[0].demanding);
+            Assert.IsTrue(c.pax[0].strapped);
+        }
+    }
+}

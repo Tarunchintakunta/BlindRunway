@@ -10,7 +10,7 @@ namespace BlindRunway
     public static class Ui
     {
         public static Font Font;
-        public static Sprite Round, Circle, Star;
+        public static Sprite Round, Circle, Star, White;
 
         public static void Init()
         {
@@ -18,6 +18,7 @@ namespace BlindRunway
             Round = MakeSprite(64, 16, true);
             Circle = MakeSprite(128, 64, false);
             Star = MakeStar(128);
+            White = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
             if (UnityEngine.Object.FindAnyObjectByType<EventSystem>() == null)
                 UnityEngine.Object.DontDestroyOnLoad(new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule)));
         }
