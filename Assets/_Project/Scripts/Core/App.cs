@@ -9,6 +9,7 @@ namespace BlindRunway
         public static App I;
         public Camera Cam;
         public Screens Screens;
+        public Session Session;
         Text toast;
         float toastUntil;
 
@@ -33,7 +34,9 @@ namespace BlindRunway
             Ui.Place(toast, new Vector2(0.5f, 0), new Vector2(0, 60), new Vector2(1400, 60));
 
             Net.Init();
+            Session = gameObject.AddComponent<Session>();
             Screens = gameObject.AddComponent<Screens>();
+            Session.Changed += Screens.Route;
         }
 
         void Start() => Screens.Splash();

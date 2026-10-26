@@ -7,6 +7,8 @@ namespace BlindRunway
     public class Screens : MonoBehaviour
     {
         RectTransform root;
+        Phase shown = Phase.Menu;
+        bool lobbyAnimated;
 
         void Awake() => root = Ui.MakeCanvas("Screens", 10);
 
@@ -70,17 +72,90 @@ namespace BlindRunway
             Ui.Place(back, new Vector2(0, 0), new Vector2(48, 48), new Vector2(220, 70));
         }
 
-        void Host()
+        void Host() => App.I.Session.Host();
+        void Join(string code) => App.I.Session.Join(code);
+
+        // Called whenever Session state changes.
+        public void Route()
         {
-            if (Net.Host()) App.I.Toast("Hosting. Join code " + Net.ToCode(Net.LocalIp()));
-            else App.I.Toast("Could not host (is port 7777 busy?)");
+            var phase = App.I.Session.Phase;
+            if (phase != Phase.Lobby) lobbyAnimated = false;
+            switch (phase)
+            {
+                case Phase.Menu:
+                    if (shown != Phase.Menu) Menu();
+                    break;
+                case Phase.Lobby:
+                    Lobby();
+                    break;
+            }
+            shown = phase;
         }
 
-        void Join(string code)
+        public void Lobby()
         {
-            if (!Net.TryParseCode(code, out var ip)) { App.I.Toast("That join code looks wrong."); return; }
-            if (Net.Join(ip)) App.I.Toast("Connecting to " + ip + "...");
-            else App.I.Toast("Could not start client.");
+            var s = App.I.Session;
+            var L = s.Lobby;
+            var r = Clear();
+            Stars(r, 40);
+
+            var title = Ui.Label(r, "CREW LOBBY", 56, Tokens.TextPrimary, TextAnchor.UpperLeft, FontStyle.Bold);
+            Ui.Place(title, new Vector2(0, 1), new Vector2(48, -48), new Vector2(800, 70));
+            var leave = Ui.Btn(r, "LEAVE", () => s.Leave(), Tokens.BgPanel);
+            Ui.Place(leave, new Vector2(0, 0), new Vector2(48, 48), new Vector2(220, 70));
+
+            if (L.players == 0)
+            {
+                var wait = Ui.Pulsing(Ui.Label(r, "Connecting to the host...", 40, Tokens.TextMuted));
+                Ui.Place(wait, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1200, 60));
+                return;
+            }
+
+            var codeHint = Ui.Label(r, "JOIN CODE", 24, Tokens.TextMuted, TextAnchor.UpperRight);
+            Ui.Place(codeHint, new Vector2(1, 1), new Vector2(-48, -48), new Vector2(400, 30));
+            var code = Ui.Label(r, L.code, 52, Tokens.Cyan, TextAnchor.UpperRight, FontStyle.Bold);
+            Ui.Place(code, new Vector2(1, 1), new Vector2(-48, -80), new Vector2(500, 64));
+            var crew = Ui.Label(r, $"CREW {L.players}/3", 26, Tokens.TextMuted, TextAnchor.UpperLeft);
+            Ui.Place(crew, new Vector2(0, 1), new Vector2(50, -120), new Vector2(400, 36));
+
+            for (int i = 0; i < 3; i++) RoleCard(r, (Role)i, L, s.MyRole, i);
+            lobbyAnimated = true;
+        }
+
+        void RoleCard(Transform r, Role role, LobbyState L, Role mine, int i)
+        {
+            var tint = Roles.Tint(role);
+            var card = Ui.Img(r, Tokens.BgPanel);
+            Ui.Place(card, new Vector2(0.5f, 0.5f), new Vector2((i - 1) * 540, 10), new Vector2(480, 600));
+            if (!lobbyAnimated) Ui.In(card, 0.08f * i);
+            var t = card.transform;
+
+            Ui.Place(Ui.Img(t, tint), new Vector2(0.5f, 1), Vector2.zero, new Vector2(480, 10));
+            var glyph = Ui.Img(t, tint.A(0.15f), Ui.Circle);
+            Ui.Place(glyph, new Vector2(0.5f, 1), new Vector2(0, -40), new Vector2(120, 120));
+            var letter = Ui.Label(glyph.transform, Roles.Names[i].Substring(0, 1), 64, tint, TextAnchor.MiddleCenter, FontStyle.Bold);
+            Ui.Fill(letter.rectTransform);
+            var name = Ui.Label(t, Roles.Names[i], 40, Tokens.TextPrimary, TextAnchor.MiddleCenter, FontStyle.Bold);
+            Ui.Place(name, new Vector2(0.5f, 1), new Vector2(0, -175), new Vector2(440, 50));
+
+            var body = "";
+            foreach (var c in Roles.Can[i]) body += "+  " + c + "\n";
+            foreach (var c in Roles.Cannot[i]) body += "-  " + c + "\n";
+            var bullets = Ui.Label(t, body, 24, Tokens.TextMuted, TextAnchor.UpperLeft);
+            bullets.lineSpacing = 1.3f;
+            Ui.Place(bullets, new Vector2(0.5f, 1), new Vector2(0, -245), new Vector2(400, 220));
+
+            long owner = L.seat[i];
+            string status = owner == -1 ? "OPEN SEAT" : role == mine ? "YOU" : "CREWMATE";
+            if (owner != -1 && L.ready[i]) status += "  -  READY";
+            var st = Ui.Label(t, status, 26, owner == -1 ? Tokens.TextMuted : L.ready[i] ? Tokens.Success : tint, TextAnchor.MiddleCenter, FontStyle.Bold);
+            Ui.Place(st, new Vector2(0.5f, 0), new Vector2(0, 110), new Vector2(440, 40));
+
+            if (owner == -1)
+            {
+                var take = Ui.Btn(t, "TAKE SEAT", () => App.I.Session.Act("claim", i), tint);
+                Ui.Place(take, new Vector2(0.5f, 0), new Vector2(0, 28), new Vector2(300, 66));
+            }
         }
 
         // ---- shared visuals ----

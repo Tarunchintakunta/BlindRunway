@@ -38,7 +38,7 @@ namespace BlindRunway
             };
             NM.ConnectionApprovalCallback = (req, res) =>
             {
-                bool full = NM.ConnectedClientsIds.Count >= MaxPlayers;
+                bool full = PlayerCount >= MaxPlayers;
                 res.Approved = !full && AcceptingPlayers();
                 res.CreatePlayerObject = false;
                 if (!res.Approved) res.Reason = full ? "Crew is full (3/3)." : "Match already in progress.";
@@ -52,6 +52,7 @@ namespace BlindRunway
         public static bool Host()
         {
             transport.SetConnectionData("127.0.0.1", Port, "0.0.0.0");
+            Gone.Clear();
             if (!NM.StartHost()) return false;
             RegisterHandlers();
             return true;
@@ -109,9 +110,23 @@ namespace BlindRunway
 
         public static void ToServer(string name, object msg) => Send(NetworkManager.ServerClientId, name, msg);
 
+        // Ids that disconnected this frame can still be listed while callbacks run.
+        public static readonly HashSet<ulong> Gone = new HashSet<ulong>();
+
+        public static int PlayerCount
+        {
+            get
+            {
+                int n = 0;
+                foreach (var id in NM.ConnectedClientsIds) if (!Gone.Contains(id)) n++;
+                return n;
+            }
+        }
+
         public static void ToAll(string name, object msg)
         {
-            foreach (var id in NM.ConnectedClientsIds) Send(id, name, msg);
+            foreach (var id in NM.ConnectedClientsIds)
+                if (!Gone.Contains(id)) Send(id, name, msg);
         }
 
         // ---- join codes ----
