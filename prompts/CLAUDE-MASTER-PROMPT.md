@@ -17,7 +17,7 @@ Read and obey:
 - `docs/UI-DESIGN-SYSTEM.md`
 - `docs/MICROCOMMIT-PLAN.md`
 - `levels/L01` … `levels/L05`
-- `assets/placeholders/` for temporary UI art
+- `docs/placeholders/` for temporary UI art
 
 ## Environment (user already installed)
 Mac M5 Pro · Unity 6 LTS · C# · .NET SDK · Git · C++ optional  

@@ -19,7 +19,7 @@
 | `docs/UI-DESIGN-SYSTEM.md` | Colors, type, screens, motion |
 | `docs/MICROCOMMIT-PLAN.md` | Ordered commits for levels 1–5 |
 | `levels/L01`–`L05` | Per-level design + win/fail + UI beats |
-| `assets/placeholders/` | SVG/PNG placeholders for UI until art is final |
+| `docs/placeholders/` | SVG/PNG placeholders for UI until art is final |
 | `scripts/` | Helper shell notes for git/Unity |
 
 ## Your machine
