@@ -14,6 +14,7 @@ namespace BlindRunway
         public int players;
         public int level;
         public string code = "";
+        public bool solo; // dev test: host holds every seat and flips views with F1-F3
     }
 
     [Serializable]
@@ -34,7 +35,7 @@ namespace BlindRunway
 
     public static class Msg
     {
-        public const string Lobby = "br.lobby", Act = "br.act", Phase = "br.phase";
+        public const string Lobby = "br.lobby", Act = "br.act", Phase = "br.phase", Input = "br.input";
     }
 
     // Lobby + match flow. Server half keeps the authoritative state (srv*), client half mirrors what it is sent.
@@ -44,6 +45,9 @@ namespace BlindRunway
         public LobbyState Lobby = new LobbyState();
         public int Level;
         public event Action Changed;
+        public event Action<Role, InputMsg> InputReceived; // server: validated input per seat
+        public Role SoloView = Role.Pilot;
+        float sendT;
 
         LobbyState srv = new LobbyState();
         Phase srvPhase = Phase.Menu;
@@ -55,6 +59,7 @@ namespace BlindRunway
             get
             {
                 if (Net.NM == null || !Net.Running) return Role.None;
+                if (Lobby.solo) return SoloView;
                 return (Role)Array.IndexOf(Lobby.seat, (long)Net.NM.LocalClientId);
             }
         }
@@ -68,6 +73,7 @@ namespace BlindRunway
             });
             Net.On(Msg.Phase, (s, j) => OnPhase(JsonUtility.FromJson<PhaseMsg>(j)));
             Net.On(Msg.Act, OnAct);
+            Net.On(Msg.Input, OnInput);
             Net.AcceptingPlayers = () => srvPhase == Phase.Lobby;
         }
 
@@ -75,6 +81,28 @@ namespace BlindRunway
         {
             Net.NM.OnClientConnectedCallback += OnConnected;
             Net.NM.OnClientDisconnectCallback += OnDisconnected;
+        }
+
+        void Update()
+        {
+            if (Phase != Phase.Playing) return;
+            if (Lobby.solo)
+            {
+                var view = Input.GetKeyDown(KeyCode.F1) ? Role.Pilot : Input.GetKeyDown(KeyCode.F2) ? Role.Navigator
+                    : Input.GetKeyDown(KeyCode.F3) ? Role.Cabin : SoloView;
+                if (view != SoloView)
+                {
+                    SoloView = view;
+                    Changed?.Invoke();
+                }
+            }
+            var me = MyRole;
+            if (me == Role.None) return;
+            Controls.Poll(me);
+            sendT += Time.deltaTime;
+            if (sendT < 0.05f) return;
+            sendT = 0;
+            Net.ToServer(Msg.Input, Controls.Take(me));
         }
 
         // ---- client API ----
@@ -178,6 +206,12 @@ namespace BlindRunway
                     if (srvPhase != Phase.Lobby || mine < 0) return;
                     srv.ready[mine] = !srv.ready[mine];
                     break;
+                case "solo":
+                    if (!IsHostSender(sender) || srvPhase != Phase.Lobby || srv.players != 1) return;
+                    for (int i = 0; i < 3; i++) srv.seat[i] = (long)sender;
+                    srv.solo = true;
+                    StartMatch();
+                    return;
                 case "start":
                     if (!IsHostSender(sender) || srvPhase != Phase.Lobby || !CanStart(srv)) return;
                     StartMatch();
@@ -186,6 +220,18 @@ namespace BlindRunway
                     return;
             }
             Push();
+        }
+
+        // Ownership rule: a client may only drive the seat it holds.
+        void OnInput(ulong sender, string json)
+        {
+            if (!Net.IsServer || srvPhase != Phase.Playing) return;
+            var m = JsonUtility.FromJson<InputMsg>(json);
+            var role = srv.solo ? (Role)m.role : (Role)Array.IndexOf(srv.seat, (long)sender);
+            if (srv.solo && !IsHostSender(sender)) return;
+            if (role < Role.Pilot || role > Role.Cabin) return;
+            if (m.say != null && m.say.Length > 40) m.say = m.say.Substring(0, 40);
+            InputReceived?.Invoke(role, m);
         }
 
         // Exactly three connected players, every seat taken, everyone ready.

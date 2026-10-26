@@ -138,6 +138,11 @@ namespace BlindRunway
                 start.interactable = can;
                 Ui.Place(start, new Vector2(1, 0), new Vector2(-48, 48), new Vector2(260, 76));
             }
+            if (s.IsHost && L.players == 1 && (Application.isEditor || Debug.isDebugBuild))
+            {
+                var solo = Ui.Btn(r, "SOLO TEST (F1-F3 swap seats)", () => s.Act("solo"), Tokens.BgPanel);
+                Ui.Place(solo, new Vector2(0.5f, 0), new Vector2(0, 48), new Vector2(560, 70));
+            }
             string hint = L.players < 3 ? $"Waiting for {3 - L.players} more crew. Share the join code."
                 : me == Role.None ? "Take a seat."
                 : Session.CanStart(L) ? (s.IsHost ? "Everyone is ready. Start when you like." : "Everyone is ready. Waiting for the host.")
