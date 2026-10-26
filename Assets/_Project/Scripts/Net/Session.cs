@@ -174,10 +174,33 @@ namespace BlindRunway
                     }
                     srv.seat[a.role] = (long)sender;
                     break;
+                case "ready":
+                    if (srvPhase != Phase.Lobby || mine < 0) return;
+                    srv.ready[mine] = !srv.ready[mine];
+                    break;
+                case "start":
+                    if (!IsHostSender(sender) || srvPhase != Phase.Lobby || !CanStart(srv)) return;
+                    StartMatch();
+                    return;
                 default:
                     return;
             }
             Push();
+        }
+
+        // Exactly three connected players, every seat taken, everyone ready.
+        public static bool CanStart(LobbyState L)
+        {
+            if (L.players != Net.MaxPlayers) return false;
+            for (int i = 0; i < 3; i++)
+                if (L.seat[i] == -1 || !L.ready[i]) return false;
+            return true;
+        }
+
+        void StartMatch()
+        {
+            for (int i = 0; i < 3; i++) srv.ready[i] = false;
+            SetPhase(Phase.Playing, null);
         }
 
         void SetPhase(Phase p, string note)

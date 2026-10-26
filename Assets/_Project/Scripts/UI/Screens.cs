@@ -88,6 +88,9 @@ namespace BlindRunway
                 case Phase.Lobby:
                     Lobby();
                     break;
+                case Phase.Playing:
+                    if (shown != Phase.Playing) Clear(false);
+                    break;
             }
             shown = phase;
         }
@@ -120,6 +123,27 @@ namespace BlindRunway
 
             for (int i = 0; i < 3; i++) RoleCard(r, (Role)i, L, s.MyRole, i);
             lobbyAnimated = true;
+
+            var me = s.MyRole;
+            if (me != Role.None)
+            {
+                bool ready = L.ready[(int)me];
+                var rb = Ui.Btn(r, ready ? "NOT READY" : "READY", () => s.Act("ready"), ready ? Tokens.BgPanel : Tokens.Success);
+                Ui.Place(rb, new Vector2(1, 0), new Vector2(s.IsHost ? -340 : -48, 48), new Vector2(260, 76));
+            }
+            if (s.IsHost)
+            {
+                bool can = Session.CanStart(L);
+                var start = Ui.Btn(r, "START", () => s.Act("start"), can ? Tokens.Cyan : Tokens.BgPanel);
+                start.interactable = can;
+                Ui.Place(start, new Vector2(1, 0), new Vector2(-48, 48), new Vector2(260, 76));
+            }
+            string hint = L.players < 3 ? $"Waiting for {3 - L.players} more crew. Share the join code."
+                : me == Role.None ? "Take a seat."
+                : Session.CanStart(L) ? (s.IsHost ? "Everyone is ready. Start when you like." : "Everyone is ready. Waiting for the host.")
+                : "Starts when all three seats are ready.";
+            var h = Ui.Label(r, hint, 26, Tokens.TextMuted);
+            Ui.Place(h, new Vector2(0.5f, 0), new Vector2(0, 150), new Vector2(1200, 40));
         }
 
         void RoleCard(Transform r, Role role, LobbyState L, Role mine, int i)
