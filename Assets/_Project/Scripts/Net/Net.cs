@@ -16,7 +16,15 @@ namespace BlindRunway
     // ponytail: join code is the host's LAN IPv4 in hex; swap to Unity Relay join codes for internet play.
     public static class Net
     {
-        public const ushort Port = 7777;
+        public static readonly ushort Port = PortFromArgs(7777);
+
+        // "-port 7790" on the command line overrides the friends port (test runs next to a live host).
+        static ushort PortFromArgs(ushort fallback)
+        {
+            var args = Environment.GetCommandLineArgs();
+            int i = Array.IndexOf(args, "-port");
+            return i >= 0 && i + 1 < args.Length && ushort.TryParse(args[i + 1], out var p) ? p : fallback;
+        }
         public const int MaxPlayers = 3;
         public static NetworkManager NM;
         public static Func<bool> AcceptingPlayers = () => true;
