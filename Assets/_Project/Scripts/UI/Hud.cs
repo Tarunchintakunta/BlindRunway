@@ -42,6 +42,11 @@ namespace BlindRunway
         Text callout;
         float calloutAge = 99;
         int lastSeq;
+        readonly System.Collections.Generic.List<string> coach = new System.Collections.Generic.List<string>();
+        Image coachBox;
+        Text coachText;
+        float coachT;
+        const float CoachSeconds = 7;
 
         public void Build(RectTransform r, LevelDefinition L)
         {
@@ -50,6 +55,46 @@ namespace BlindRunway
             BuildRole();
             callout = Ui.Label(root, "", 54, Tokens.TextPrimary, TextAnchor.MiddleCenter, FontStyle.Bold);
             Ui.Place(callout, new Vector2(0.5f, 1), new Vector2(0, -120), new Vector2(1600, 80));
+            BuildCoach();
+        }
+
+        // First-time coach marks for this seat ("Pilot: ...") plus shared ones ("All: ...").
+        void BuildCoach()
+        {
+            var me = App.I.Session.MyRole;
+            if (me == Role.None || PlayerPrefs.GetInt(CoachKey(me), 0) == 1) return;
+            var prefix = Roles.Names[(int)me] + ":";
+            foreach (var m in level.coachMarks)
+            {
+                if (m.ToUpperInvariant().StartsWith(prefix)) coach.Add(m.Substring(prefix.Length).Trim());
+                else if (m.StartsWith("All:")) coach.Add(m.Substring(4).Trim());
+            }
+            if (coach.Count == 0) return;
+            coachBox = Ui.Img(root, Tokens.BgPanel.A(0.92f));
+            Ui.Place(coachBox, new Vector2(0.5f, 1), new Vector2(0, -200), new Vector2(900, 72));
+            Ui.Place(Ui.Img(coachBox.transform, Roles.Tint(me), null), new Vector2(0, 0.5f), Vector2.zero, new Vector2(8, 72));
+            coachText = Ui.Label(coachBox.transform, coach[0], 28, Tokens.TextPrimary);
+            Ui.Fill(coachText.rectTransform, 16);
+        }
+
+        string CoachKey(Role r) => $"br.coach.{level.number}.{(int)r}";
+
+        void TickCoach(float dt)
+        {
+            if (coachBox == null) return;
+            coachT += dt;
+            int i = (int)(coachT / CoachSeconds);
+            if (i >= coach.Count)
+            {
+                Object.Destroy(coachBox.gameObject);
+                coachBox = null;
+                PlayerPrefs.SetInt(CoachKey(App.I.Session.MyRole), 1);
+                return;
+            }
+            coachText.text = coach[i];
+            float k = coachT % CoachSeconds;
+            coachBox.color = Tokens.BgPanel.A(0.92f * Mathf.Clamp01(Mathf.Min(k * 4, (CoachSeconds - k) * 4)));
+            coachText.color = Tokens.TextPrimary.A(coachBox.color.a);
         }
 
         protected abstract void BuildRole();
@@ -69,6 +114,7 @@ namespace BlindRunway
             }
             calloutAge += dt;
             callout.color = callout.color.A(Mathf.Clamp01(3.5f - calloutAge));
+            TickCoach(dt);
             TickRole(s, dt);
         }
 
