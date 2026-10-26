@@ -46,7 +46,11 @@ namespace BlindRunway
             Session.Changed += Screens.Route;
         }
 
-        void Start() => Screens.Splash();
+        void Start()
+        {
+            Screens.Splash();
+            SmokeDriver.TryStart(gameObject); // only with -smoke on the command line
+        }
 
         public void Toast(string msg)
         {
