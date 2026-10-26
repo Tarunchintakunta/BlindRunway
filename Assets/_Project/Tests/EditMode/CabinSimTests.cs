@@ -25,10 +25,10 @@ namespace BlindRunway.Tests
             {
                 var d = (to - c.crew).normalized;
                 c.Apply(new InputMsg { moveX = d.x, moveZ = d.y });
-                c.Step(Dt, f, false);
+                c.Step(Dt, f, false, 0);
             }
             c.Apply(new InputMsg { interact = true });
-            for (float t = 0; t < holdSeconds; t += Dt) c.Step(Dt, f, false);
+            for (float t = 0; t < holdSeconds; t += Dt) c.Step(Dt, f, false, 0);
             c.Apply(new InputMsg());
         }
 
@@ -48,7 +48,7 @@ namespace BlindRunway.Tests
         {
             var c = new CabinSim(Level(2, 1));
             var low = new FlightModel(new Vector3(0, 200, -3000), 70, 0, 600, 2400);
-            for (float t = 0; t < 20; t += Dt) c.Step(Dt, low, false);
+            for (float t = 0; t < 20; t += Dt) c.Step(Dt, low, false, 0);
             Assert.Greater(c.pax[0].panic, 0.9f);
             Assert.Less(c.pax[1].panic, 0.3f);
         }
@@ -72,11 +72,29 @@ namespace BlindRunway.Tests
             var noseUp = Cruise();
             noseUp.pitch = 10;
             float before = c.Cog;
-            for (float t = 0; t < 5; t += Dt) c.Step(Dt, noseUp, false);
+            for (float t = 0; t < 5; t += Dt) c.Step(Dt, noseUp, false, 0);
             Assert.Greater(c.Cog, before);
             WalkAndHold(c, noseUp, c.crates[0].pos, 2f);
             Assert.AreEqual(1, c.CratesSecured);
             Assert.AreEqual(0.5f, c.Secure, 0.001f);
+        }
+
+        [Test]
+        public void FireStartsOnTimeAndCanBeExtinguished()
+        {
+            var L = Level(2);
+            L.fireAt = 1;
+            var c = new CabinSim(L);
+            var f = Cruise();
+            for (float t = 0; t < 3; t += Dt) c.Step(Dt, f, false, t);
+            Assert.IsTrue(c.fireOn);
+            c.Apply(new InputMsg { moveX = -1, moveZ = 1 });
+            float time = 3;
+            for (int k = 0; k < 600 && Vector2.Distance(c.crew, c.firePos) > 1f; k++, time += Dt) c.Step(Dt, f, false, time);
+            c.Apply(new InputMsg { interact = true });
+            for (float t = 0; t < 3; t += Dt, time += Dt) c.Step(Dt, f, false, time);
+            Assert.IsTrue(c.fireOut);
+            Assert.IsFalse(c.fireOn);
         }
     }
 }

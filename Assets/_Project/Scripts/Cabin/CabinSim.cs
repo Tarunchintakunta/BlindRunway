@@ -27,6 +27,9 @@ namespace BlindRunway
         public Vector2 crew = new Vector2(0, 1);
         public readonly List<Passenger> pax = new List<Passenger>();
         public readonly List<Crate> crates = new List<Crate>();
+        public readonly Vector2 firePos = new Vector2(-1.5f, 9f);
+        public bool fireOn, fireOut;
+        public float fire;           // 0..1 intensity
         public float act;            // 0..1 progress of the current hold-interaction
         public string hint = "";     // what E would do right now
 
@@ -35,6 +38,7 @@ namespace BlindRunway
         bool wasOnGround;
         readonly bool shiftsCog;
         readonly string label;
+        readonly float fireAt;
 
         public CabinSim(LevelDefinition L)
         {
@@ -48,6 +52,7 @@ namespace BlindRunway
             for (int i = 0; i < L.crates; i++) crates.Add(new Crate { pos = new Vector2(0, 12.5f + i * 1.2f) });
             shiftsCog = L.cargoShiftsCog;
             label = L.crateLabel;
+            fireAt = L.fireAt;
         }
 
         public int CratesSecured
@@ -105,8 +110,10 @@ namespace BlindRunway
             }
         }
 
-        public void Step(float dt, FlightModel plane, bool glitch)
+        public void Step(float dt, FlightModel plane, bool glitch, float time)
         {
+            if (fireAt >= 0 && time >= fireAt && !fireOn && !fireOut) fireOn = true;
+            if (fireOn) fire = Mathf.Min(1, fire + 0.04f * dt);
             var move = Vector2.ClampMagnitude(new Vector2(input.moveX, input.moveZ), 1);
             crew += move * (Walk * dt);
             crew = new Vector2(Mathf.Clamp(crew.x, -1.6f, 1.6f), Mathf.Clamp(crew.y, 0.5f, 15.5f));
@@ -125,7 +132,7 @@ namespace BlindRunway
             float turbulence = Mathf.Abs(plane.roll) * 0.0006f + Mathf.Abs(plane.pitch - FlightModel.GlideDeg) * 0.0008f;
             foreach (var p in pax)
             {
-                float rate = 0.003f + turbulence + loose * 0.002f;
+                float rate = 0.003f + turbulence + loose * 0.002f + (fireOn ? 0.02f * fire : 0);
                 if (p.strapped) rate *= 0.4f;
                 if (p.demanding) rate += plane.AltFt < 1000 && !plane.onGround ? 0.06f : 0.012f;
                 if (p.spiral && glitch) rate *= 3;
@@ -150,12 +157,13 @@ namespace BlindRunway
             if (target < 0) return;
             act = Mathf.Clamp01(act + dt / Duration(target));
             if (target < 100) WorkPassenger(pax[target], dt);
-            else crates[target - 100].progress = act;
+            else if (target < 1000) crates[target - 100].progress = act;
             if (act >= 1) Complete(target);
         }
 
         int Nearest()
         {
+            if (fireOn && Vector2.Distance(crew, firePos) < Reach + 0.5f) return 1000; // fire beats everything
             int best = -1;
             float bestD = Reach;
             for (int i = 0; i < crates.Count; i++)
@@ -184,12 +192,13 @@ namespace BlindRunway
         string Describe(int id)
         {
             if (id < 0) return "";
+            if (id == 1000) return "EXTINGUISH FIRE";
             if (id >= 100) return "SECURE " + label;
             var p = pax[id];
             return p.demanding ? "SERVE DRINK" : !p.strapped ? "STRAP IN" : "CALM DOWN";
         }
 
-        static float Duration(int id) => id >= 100 ? 1.5f : 1.2f;
+        static float Duration(int id) => id == 1000 ? 2.5f : id >= 100 ? 1.5f : 1.2f;
 
         void WorkPassenger(Passenger p, float dt)
         {
@@ -204,6 +213,12 @@ namespace BlindRunway
                 p.strapped = true;
                 p.demanding = false;
                 p.panic = Mathf.Max(0, p.panic - 0.4f);
+            }
+            else if (id == 1000)
+            {
+                fireOn = false;
+                fireOut = true;
+                fire = 0;
             }
             else
             {

@@ -39,6 +39,9 @@ namespace BlindRunway
         public Crate[] crates = new Crate[0];
         public float act;
         public string hint = "";
+        public bool fireOn;
+        public float fire;
+        public Vector2 firePos;
     }
 
     // Server-side simulation of one level attempt.
@@ -111,7 +114,7 @@ namespace BlindRunway
             gearReq = flapsReq = false;
             Plane.cog = Cabin.Cog;
             Plane.Step(pilot, dt);
-            Cabin.Step(dt, Plane, Glitch);
+            Cabin.Step(dt, Plane, Glitch, T);
         }
 
         // Ideal height on a 3 deg path to a touchdown point 300 m past the threshold.
@@ -145,6 +148,9 @@ namespace BlindRunway
             s.crew = Cabin.crew;
             s.pax = Cabin.pax.ToArray();
             s.crates = Cabin.crates.ToArray();
+            s.fireOn = Cabin.fireOn;
+            s.fire = Cabin.fire;
+            s.firePos = Cabin.firePos;
             s.act = Cabin.act;
             s.hint = Cabin.hint;
         }

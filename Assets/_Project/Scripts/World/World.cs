@@ -14,7 +14,8 @@ namespace BlindRunway
         readonly List<Renderer> paxBody = new List<Renderer>();
         public readonly List<Transform> Crates = new List<Transform>();
         readonly List<Renderer> crateStrap = new List<Renderer>();
-        Transform inner;
+        Transform inner, fire;
+        Light fireLight;
         Vector3 shownCrew;
         Role role = Role.None;
         LevelDefinition level;
@@ -42,7 +43,7 @@ namespace BlindRunway
         public void Clear()
         {
             if (root) Destroy(root.gameObject);
-            root = plane = cabin = crew = null;
+            root = plane = cabin = crew = fire = null;
             Pax.Clear();
             Crates.Clear();
             crateStrap.Clear();
@@ -181,6 +182,17 @@ namespace BlindRunway
                 Crates.Add(c.transform);
             }
 
+            if (level.fireAt >= 0)
+            {
+                fire = Part(inner, new Vector3(-1.5f, 0.4f, 9f), new Vector3(0.8f, 0.8f, 0.8f), Tokens.Amber, 4, PrimitiveType.Sphere).transform;
+                fireLight = new GameObject("FireLight").AddComponent<Light>();
+                fireLight.type = LightType.Point;
+                fireLight.color = Tokens.Amber;
+                fireLight.range = 6;
+                fireLight.transform.SetParent(fire, false);
+                fire.gameObject.SetActive(false);
+            }
+
             crew = Part(inner, new Vector3(0, 0.9f, 1), new Vector3(0.6f, 0.9f, 0.6f), Tokens.Cabin, 0.4f, PrimitiveType.Capsule).transform;
             Part(crew, new Vector3(0, 1.1f, 0), new Vector3(1.1f, 0.25f, 1.1f), Tokens.Danger, 0, PrimitiveType.Cylinder); // hat
             shownCrew = crew.localPosition;
@@ -211,6 +223,13 @@ namespace BlindRunway
                 var c = s.crates[i];
                 Crates[i].localPosition = Vector3.Lerp(Crates[i].localPosition, new Vector3(c.pos.x, 0.35f, c.pos.y), 1 - Mathf.Exp(-10 * dt));
                 crateStrap[i].material.color = c.secured ? Tokens.Success : Tokens.Danger;
+            }
+            if (fire != null)
+            {
+                fire.gameObject.SetActive(s.fireOn);
+                float flick = 0.8f + 0.2f * Mathf.Sin(Time.time * 30) + 0.1f * Mathf.Sin(Time.time * 47);
+                fire.localScale = Vector3.one * (0.4f + s.fire * 1.2f) * flick;
+                fireLight.intensity = 3 * s.fire * flick;
             }
             App.I.Cam.transform.position = CabinCam;
             ApplyShake(App.I.Cam.transform, dt);
