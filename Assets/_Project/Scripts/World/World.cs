@@ -126,6 +126,8 @@ namespace BlindRunway
             Part(plane, new Vector3(0, 0.6f, -10.5f), new Vector3(9, 0.3f, 2.5f), hull);
             Part(plane, new Vector3(0, 0.4f, 9), new Vector3(2.6f, 1.2f, 3), Tokens.Cyan, 1.5f); // cockpit glow
             shownPos = new Vector3(0, level.startAltitude, -level.startDistance);
+            App.I.Cam.transform.position = shownPos + new Vector3(0, 5, -26); // start behind the plane, no swoop
+            App.I.Cam.transform.rotation = Quaternion.identity;
         }
 
         // Taxiway, apron, terminal, tower, hangars, windsock and a ring of hills: readable silhouettes at night.
