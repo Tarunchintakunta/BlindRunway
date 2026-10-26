@@ -17,7 +17,7 @@ namespace BlindRunway
             if (current != null && r == role) return;
             Clear();
             role = r;
-            current = r == Role.Pilot ? new PilotHud() : null;
+            current = r == Role.Pilot ? new PilotHud() : r == Role.Navigator ? new NavigatorHud() : (RoleHud)null;
             current?.Build(root, L);
         }
 

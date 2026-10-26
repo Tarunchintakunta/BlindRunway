@@ -23,6 +23,13 @@ namespace BlindRunway
         public int flaps;
         public bool pingGear, pingFlaps;
         public Callout[] callouts = new Callout[0];
+
+        // Navigator only
+        public bool nav;
+        public float altFt, kt, vsFpm, hdg, fuel, distM, wind;
+        public float loc, gs;          // -1..1, + = right of centerline / above the 3 deg path
+        public bool glitch;
+        public string warnings = "";   // '|' separated
     }
 
     // Server-side simulation of one level attempt.
@@ -81,8 +88,47 @@ namespace BlindRunway
             Plane.Step(pilot, dt);
         }
 
+        // Ideal height on a 3 deg path to a touchdown point 300 m past the threshold.
+        public static float PathHeight(float z) => Mathf.Max(0, 300 - z) * Mathf.Tan(3 * Mathf.Deg2Rad);
+
+        public string Warnings()
+        {
+            var p = Plane;
+            var w = new List<string>();
+            if (!p.onGround && p.speed < p.StallSpeed + 5) w.Add("STALL");
+            if (!p.onGround && !p.gearDown && p.AltFt < 1000) w.Add("GEAR");
+            if (!p.onGround && p.vs < -6 && p.AltFt < 300) w.Add("SINK RATE");
+            if (!p.onGround && p.AltFt < 100 && p.vs < -5) w.Add("PULL UP");
+            if (p.fuel < 0.15f) w.Add("FUEL LOW");
+            if (p.onGround && p.throttle > 0.1f && !p.Done) w.Add("THROTTLE IDLE");
+            return string.Join("|", w);
+        }
+
         // Role.None = everything (solo test).
         public Snapshot SnapshotFor(Role r)
+        {
+            var s = Base();
+            if (r == Role.Navigator || r == Role.None) FillInstruments(s);
+            return s;
+        }
+
+        void FillInstruments(Snapshot s)
+        {
+            var p = Plane;
+            s.nav = true;
+            s.altFt = p.AltFt;
+            s.kt = p.Knots;
+            s.vsFpm = p.vs * 196.85f;
+            s.hdg = Mathf.Repeat(p.yaw, 360);
+            s.fuel = p.fuel;
+            s.distM = -p.pos.z;
+            s.wind = L.crosswind;
+            s.loc = Mathf.Clamp(p.pos.x / 150f, -1, 1);
+            s.gs = Mathf.Clamp((p.pos.y - PathHeight(p.pos.z)) / 40f, -1, 1);
+            s.warnings = Warnings();
+        }
+
+        Snapshot Base()
         {
             var p = Plane;
             return new Snapshot
