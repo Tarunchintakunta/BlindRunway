@@ -88,17 +88,17 @@ namespace BlindRunway
                 case Phase.Lobby:
                     Lobby();
                     break;
+                case Phase.Result:
+                    if (shown != Phase.Result) Result();
+                    break;
                 case Phase.Playing:
                     if (shown != Phase.Playing) Clear(false);
                     App.I.World.Show(App.I.Session.MyRole, App.I.Session.Def); // seat or solo view changed
                     App.I.Hud.Show(App.I.Session.MyRole, App.I.Session.Def);
                     break;
             }
-            if (phase != Phase.Playing && shown == Phase.Playing)
-            {
-                App.I.World.Clear();
-                App.I.Hud.Clear();
-            }
+            if (phase != Phase.Playing) App.I.Hud.Clear();
+            if (phase == Phase.Menu || phase == Phase.Lobby) App.I.World.Clear(); // Result keeps the frozen world
             shown = phase;
         }
 
@@ -192,6 +192,34 @@ namespace BlindRunway
                 var take = Ui.Btn(t, "TAKE SEAT", () => App.I.Session.Act("claim", i), tint);
                 Ui.Place(take, new Vector2(0.5f, 0), new Vector2(0, 28), new Vector2(300, 66));
             }
+        }
+
+        public void Result()
+        {
+            var s = App.I.Session;
+            var res = s.Result ?? new ResultMsg { reason = "unknown" };
+            var r = Clear(false);
+            Ui.Fill(Ui.Img(r, Tokens.BgVoid.A(0.72f), null).rectTransform);
+            var head = Ui.Label(r, res.win ? "LANDED" : "WHY WE DIED", 96, res.win ? Tokens.Success : Tokens.Danger, TextAnchor.MiddleCenter, FontStyle.Bold);
+            Ui.Place(head, new Vector2(0.5f, 0.5f), new Vector2(0, 260), new Vector2(1400, 120));
+            var why = Ui.Label(r, res.win ? $"{res.stars} / 3 stars" : res.reason, 36, Tokens.TextPrimary);
+            Ui.Place(why, new Vector2(0.5f, 0.5f), new Vector2(0, 160), new Vector2(1400, 50));
+            ResultButtons(r, res);
+        }
+
+        void ResultButtons(Transform r, ResultMsg res)
+        {
+            var s = App.I.Session;
+            if (!s.IsHost)
+            {
+                var wait = Ui.Pulsing(Ui.Label(r, "Waiting for the host...", 28, Tokens.TextMuted));
+                Ui.Place(wait, new Vector2(1, 0), new Vector2(-48, 60), new Vector2(600, 50));
+                return;
+            }
+            var lobby = Ui.Btn(r, "LOBBY", () => s.Act("lobby"), Tokens.BgPanel);
+            Ui.Place(lobby, new Vector2(1, 0), new Vector2(-340, 48), new Vector2(260, 76));
+            var retry = Ui.Btn(r, "RETRY", () => s.Act("retry"));
+            Ui.Place(retry, new Vector2(1, 0), new Vector2(-48, 48), new Vector2(260, 76));
         }
 
         // ---- shared visuals ----

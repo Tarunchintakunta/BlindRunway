@@ -99,6 +99,11 @@ namespace BlindRunway
                 Box(new Vector3(x, 0.5f, -2), Vector3.one, Tokens.Success, 3);
                 Box(new Vector3(x, 0.5f, len + 2), Vector3.one, Tokens.Danger, 3);
             }
+            foreach (var gz in new[] { level.gateStart, level.gateEnd }) // stop-box bars, green like the checklist
+                for (int side = -1; side <= 1; side += 2)
+                    Box(new Vector3(side * (FlightModel.RunwayHalfWidth + 4), 1.5f, gz), new Vector3(6, 3, 2), Tokens.Success, 4);
+            for (float z = level.gateStart; z <= level.gateEnd; z += 40)
+                Box(new Vector3(0, 0.12f, z), new Vector3(3, 0.05f, 3), Tokens.Success, 2);
             for (float z = -900; z < 0; z += 60) Box(new Vector3(0, 1, z), new Vector3(2, 2, 2), Tokens.TextPrimary, 4);
             Box(new Vector3(0, 1, -300), new Vector3(30, 1, 1), Tokens.TextPrimary, 4);
 

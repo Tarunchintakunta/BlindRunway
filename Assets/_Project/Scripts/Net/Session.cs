@@ -35,7 +35,7 @@ namespace BlindRunway
 
     public static class Msg
     {
-        public const string Lobby = "br.lobby", Act = "br.act", Phase = "br.phase", Input = "br.input", Snap = "br.snap";
+        public const string Lobby = "br.lobby", Act = "br.act", Phase = "br.phase", Input = "br.input", Snap = "br.snap", Result = "br.result";
     }
 
     // Lobby + match flow. Server half keeps the authoritative state (srv*), client half mirrors what it is sent.
@@ -49,6 +49,7 @@ namespace BlindRunway
         public Role SoloView = Role.Pilot;
         public Snapshot Snap;          // latest snapshot for this client
         public LevelDefinition Def;    // level being played
+        public ResultMsg Result;       // last finished attempt
         float sendT;
 
         Match match;                   // server only
@@ -81,6 +82,7 @@ namespace BlindRunway
             Net.On(Msg.Act, OnAct);
             Net.On(Msg.Input, OnInput);
             Net.On(Msg.Snap, (s, j) => Snap = JsonUtility.FromJson<Snapshot>(j));
+            Net.On(Msg.Result, (s, j) => Result = JsonUtility.FromJson<ResultMsg>(j));
             InputReceived += (r, m) => match?.Apply(r, m);
             Net.AcceptingPlayers = () => srvPhase == Phase.Lobby;
         }
@@ -226,6 +228,16 @@ namespace BlindRunway
                     srv.solo = true;
                     StartMatch();
                     return;
+                case "retry":
+                    if (!IsHostSender(sender) || srvPhase != Phase.Result) return;
+                    StartMatch();
+                    return;
+                case "lobby":
+                    if (!IsHostSender(sender) || srvPhase != Phase.Result) return;
+                    if (srv.solo) srv.seat = new long[] { -1, -1, -1 };
+                    srv.solo = false;
+                    SetPhase(Phase.Lobby, null);
+                    return;
                 case "start":
                     if (!IsHostSender(sender) || srvPhase != Phase.Lobby || !CanStart(srv)) return;
                     StartMatch();
@@ -273,9 +285,29 @@ namespace BlindRunway
                 match.Step(SimDt);
                 simAcc -= SimDt;
             }
+            var result = LevelRules.Check(match);
+            if (result != null)
+            {
+                EndMatch(result);
+                return;
+            }
             snapT += dt;
             if (snapT < SnapInterval) return;
             snapT = 0;
+            SendSnapshots();
+        }
+
+        void EndMatch(ResultMsg r)
+        {
+            r.level = srv.level;
+            SendSnapshots(); // final frame for the freeze-frame
+            Net.ToAll(Msg.Result, r);
+            match = null;
+            SetPhase(Phase.Result, null);
+        }
+
+        void SendSnapshots()
+        {
             if (srv.solo)
             {
                 Net.Send(NetworkManager.ServerClientId, Msg.Snap, match.SnapshotFor(Role.None));
