@@ -77,6 +77,20 @@ namespace BlindRunway.Tests
         }
 
         [Test]
+        public void AftCargoPushesNoseUpAndDullsPitch()
+        {
+            var a = NewPlane();
+            var b = NewPlane();
+            b.cog = 0.6f;
+            for (int k = 0; k < 100; k++)
+            {
+                a.Step(new InputMsg { pitch = -1 }, Dt);
+                b.Step(new InputMsg { pitch = -1 }, Dt);
+            }
+            Assert.Greater(b.pitch, a.pitch);
+        }
+
+        [Test]
         public void CrosswindDriftsRight()
         {
             var f = new FlightModel(new Vector3(0, 460, -9000), 70, 4, 600, 2400);

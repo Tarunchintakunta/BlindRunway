@@ -49,7 +49,8 @@ namespace BlindRunway
 
         void Fly(InputMsg i, float drag, float dt)
         {
-            if (Mathf.Abs(i.pitch) > 0.05f) pitch += i.pitch * 14f * dt;
+            float authority = 1 - Mathf.Min(0.5f, Mathf.Abs(cog)); // loose cargo makes pitch sluggish
+            if (Mathf.Abs(i.pitch) > 0.05f) pitch += i.pitch * 14f * authority * dt;
             else pitch = Mathf.MoveTowards(pitch, GlideDeg, 3f * dt);
             pitch = Mathf.Clamp(pitch + cog * 5f * dt, -20f, 20f);
             yaw += i.yaw * 12f * dt;

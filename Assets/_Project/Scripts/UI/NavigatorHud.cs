@@ -9,7 +9,7 @@ namespace BlindRunway
     {
         Text title, timer, warnings;
         readonly Text[] values = new Text[5];
-        RectTransform pathDot, mapPlane;
+        RectTransform pathDot, mapPlane, cogDiamond;
         Image ilsFrame;
         float mapScaleZ;
         const float MapScaleX = 2f; // px per metre sideways
@@ -57,6 +57,16 @@ namespace BlindRunway
             Ui.Place(Ui.Label(f, "YOU  vs  GLIDE PATH", 20, Tokens.TextMuted), new Vector2(0.5f, 1), new Vector2(0, -10), new Vector2(400, 30));
             Ui.Place(Ui.Label(f, "HIGH", 18, Tokens.TextMuted), new Vector2(0.5f, 1), new Vector2(0, -40), new Vector2(100, 24));
             Ui.Place(Ui.Label(f, "LOW", 18, Tokens.TextMuted), new Vector2(0.5f, 0), new Vector2(0, 14), new Vector2(100, 24));
+
+            if (level.cargoShiftsCog) // CoG diamond: drifts up when loose cargo sits aft
+            {
+                var track = Ui.Img(f, Tokens.BgVoid, null);
+                Ui.Place(track, new Vector2(1, 0.5f), new Vector2(-24, 0), new Vector2(8, 400));
+                Ui.Place(Ui.Label(f, "CoG", 18, Tokens.Amber), new Vector2(1, 0.5f), new Vector2(-8, 220), new Vector2(60, 24));
+                var d = Ui.Img(f, Tokens.Amber, null);
+                cogDiamond = Ui.Place(d, new Vector2(1, 0.5f), new Vector2(-18, 0), new Vector2(22, 22));
+                d.transform.localRotation = Quaternion.Euler(0, 0, 45);
+            }
 
             if (level.crosswind != 0) // wind vector: arrow length scales with strength
             {
@@ -123,6 +133,7 @@ namespace BlindRunway
             if (s.glitch && Random.value < 0.15f) values[0].text = $"{Random.Range(0, 99999):N0}";
 
             pathDot.anchoredPosition = Vector2.Lerp(pathDot.anchoredPosition, new Vector2(s.loc, s.gs) * 220, 1 - Mathf.Exp(-10 * dt));
+            if (cogDiamond != null) cogDiamond.anchoredPosition = new Vector2(-18, Mathf.Clamp(s.cog, -1, 1) * 190);
             mapPlane.anchoredPosition = new Vector2(Mathf.Clamp(s.pos.x * MapScaleX, -170, 170), 30 + (Mathf.Max(s.pos.z, MapZMin) - MapZMin) * mapScaleZ);
             warnings.text = s.warnings.Replace("|", "    ");
 
