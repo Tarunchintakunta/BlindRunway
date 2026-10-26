@@ -112,13 +112,9 @@ namespace BlindRunway
             if (Phase != Phase.Playing) return;
             if (Lobby.Solo)
             {
-                var view = Input.GetKeyDown(KeyCode.F1) ? Role.Pilot : Input.GetKeyDown(KeyCode.F2) ? Role.Navigator
-                    : Input.GetKeyDown(KeyCode.F3) ? Role.Cabin : SoloView;
-                if (view != SoloView)
-                {
-                    SoloView = view;
-                    Changed?.Invoke();
-                }
+                if (Input.GetKeyDown(KeyCode.F1)) SwitchSeat(Role.Pilot);
+                if (Input.GetKeyDown(KeyCode.F2)) SwitchSeat(Role.Navigator);
+                if (Input.GetKeyDown(KeyCode.F3)) SwitchSeat(Role.Cabin);
             }
             var me = MyRole;
             if (me == Role.None) return;
@@ -183,6 +179,17 @@ namespace BlindRunway
             Lobby = new LobbyState();
             Changed?.Invoke();
             if (why != null) App.I.Toast(why);
+        }
+
+        // Solo hot-seat: the seat you leave goes idle (neutral input), the new one takes over keyboard and HUD.
+        public void SwitchSeat(Role seat)
+        {
+            if (!Lobby.Solo || seat == SoloView || seat < Role.Pilot || seat > Role.Cabin) return;
+            Controls.Take(SoloView); // drop half-latched presses from the old seat
+            if (Phase == Phase.Playing) Net.ToServer(Msg.Input, new InputMsg { role = (int)SoloView });
+            SoloView = seat;
+            sendT = 1; // announce the new seat on the next frame so its snapshot follows quickly
+            Changed?.Invoke();
         }
 
         public void Act(string act, int role = 0, int level = 0) =>
@@ -338,7 +345,7 @@ namespace BlindRunway
             for (int i = 0; i < 3; i++) srv.ready[i] = false;
             match = new Match(Levels.Get(srv.level));
             simAcc = snapT = introT = 0;
-            soloSeat = Role.Pilot;
+            soloSeat = SoloView = Role.Pilot;
             for (int i = 0; i < 3; i++) gotIt[i] = false;
             SetPhase(Phase.Intro, null);
         }

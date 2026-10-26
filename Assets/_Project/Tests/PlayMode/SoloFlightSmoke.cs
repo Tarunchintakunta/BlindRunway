@@ -41,8 +41,7 @@ namespace BlindRunway.PlayTests
 
             foreach (var role in new[] { Role.Navigator, Role.Cabin, Role.Pilot })
             {
-                s.SoloView = role;
-                App.I.Screens.Route();
+                s.SwitchSeat(role);
                 yield return null;
                 yield return null;
                 Assert.AreEqual(role, s.MyRole);
