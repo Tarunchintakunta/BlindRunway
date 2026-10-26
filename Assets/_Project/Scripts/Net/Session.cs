@@ -199,6 +199,12 @@ namespace BlindRunway
                 srv.seat[seat] = -1;
                 srv.ready[seat] = false;
             }
+            if (srvPhase != Phase.Lobby)
+            {
+                match = null;
+                SetPhase(Phase.Lobby, "A crewmate left. Back to the lobby.");
+                return;
+            }
             Push();
         }
 
