@@ -175,6 +175,9 @@ namespace BlindRunway
                 case Phase.Result:
                     if (shown != Phase.Result) Result();
                     break;
+                case Phase.Intro:
+                    if (shown != Phase.Intro) RoleIntro();
+                    break;
                 case Phase.Playing:
                     if (shown != Phase.Playing) Clear(false);
                     App.I.World.Show(App.I.Session.MyRole, App.I.Session.Def); // seat or solo view changed
@@ -182,7 +185,7 @@ namespace BlindRunway
                     break;
             }
             if (phase != Phase.Playing) App.I.Hud.Clear();
-            if (phase == Phase.Menu || phase == Phase.Lobby) App.I.World.Clear(); // Result keeps the frozen world
+            if (phase == Phase.Menu || phase == Phase.Lobby || phase == Phase.Intro) App.I.World.Clear(); // Result keeps the frozen world
             shown = phase;
         }
 
@@ -297,6 +300,58 @@ namespace BlindRunway
                 var take = Ui.Btn(t, "TAKE SEAT", () => App.I.Session.Act("claim", i), tint);
                 Ui.Place(take, new Vector2(0.5f, 0), new Vector2(0, 28), new Vector2(300, 66));
             }
+        }
+
+        // Full-bleed role card before each flight.
+        public void RoleIntro()
+        {
+            var s = App.I.Session;
+            var role = s.Lobby.solo ? Role.Pilot : s.MyRole;
+            var r = Clear();
+            if (role == Role.None)
+            {
+                Ui.Place(Ui.Label(r, "Spectating...", 40, Tokens.TextMuted), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(800, 60));
+                return;
+            }
+            int i = (int)role;
+            var tint = Roles.Tint(role);
+            Ui.Fill(Ui.Img(r, tint.A(0.08f), null).rectTransform);
+            var disc = Ui.Img(r, tint.A(0.12f), Ui.Circle);
+            Ui.Place(disc, new Vector2(0, 0.5f), new Vector2(-200, 0), new Vector2(1100, 1100));
+            var letter = Ui.Label(disc.transform, Roles.Names[i].Substring(0, 1), 520, tint, TextAnchor.MiddleCenter, FontStyle.Bold);
+            Ui.Fill(letter.rectTransform);
+            Ui.In(disc, 0);
+
+            var lvl = s.Def != null ? $"LEVEL {s.Def.number:00}  -  {s.Def.title.ToUpperInvariant()}" : "";
+            Ui.Place(Ui.Label(r, lvl, 26, Tokens.TextMuted, TextAnchor.UpperLeft, FontStyle.Bold), new Vector2(0.5f, 1), new Vector2(380, -80), new Vector2(900, 40));
+            var you = Ui.Label(r, "YOU ARE THE", 32, Tokens.TextMuted, TextAnchor.UpperLeft, FontStyle.Bold);
+            Ui.Place(you, new Vector2(0.5f, 0.5f), new Vector2(380, 300), new Vector2(900, 44));
+            var name = Ui.Label(r, Roles.Names[i], 120, tint, TextAnchor.UpperLeft, FontStyle.Bold);
+            Ui.Place(name, new Vector2(0.5f, 0.5f), new Vector2(380, 230), new Vector2(900, 150));
+            Ui.In(name, 0.1f);
+            var tag = Ui.Label(r, Roles.Taglines[i], 32, Tokens.TextPrimary, TextAnchor.UpperLeft);
+            Ui.Place(tag, new Vector2(0.5f, 0.5f), new Vector2(380, 70), new Vector2(900, 50));
+            for (int k = 0; k < Roles.Can[i].Length; k++)
+            {
+                var b = Ui.Label(r, "+   " + Roles.Can[i][k], 34, Tokens.TextPrimary, TextAnchor.UpperLeft, FontStyle.Bold);
+                Ui.Place(b, new Vector2(0.5f, 0.5f), new Vector2(380, -10 - k * 60), new Vector2(900, 50));
+                Ui.In(b, 0.25f + k * 0.08f);
+            }
+            var no = Ui.Label(r, "-   " + string.Join("   -   ", Roles.Cannot[i]), 26, Tokens.Danger, TextAnchor.UpperLeft);
+            Ui.Place(no, new Vector2(0.5f, 0.5f), new Vector2(380, -200), new Vector2(900, 80));
+            var keys = Ui.Label(r, Roles.ControlsLine[i], 22, Tokens.TextMuted, TextAnchor.UpperLeft);
+            Ui.Place(keys, new Vector2(0.5f, 0.5f), new Vector2(380, -290), new Vector2(900, 60));
+            if (s.Lobby.solo)
+                Ui.Place(Ui.Label(r, "SOLO TEST: F1 Pilot  F2 Navigator  F3 Cabin once airborne", 22, Tokens.Amber, TextAnchor.UpperLeft), new Vector2(0.5f, 0.5f), new Vector2(380, -340), new Vector2(900, 40));
+
+            Button got = null;
+            got = Ui.Btn(r, "GOT IT", () =>
+            {
+                s.Act("gotit");
+                got.interactable = false;
+                got.GetComponentInChildren<Text>().text = "WAITING FOR CREW...";
+            }, tint);
+            Ui.Place(got, new Vector2(1, 0), new Vector2(-48, 48), new Vector2(380, 84));
         }
 
         public void Result()

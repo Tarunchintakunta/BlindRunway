@@ -15,6 +15,20 @@ namespace BlindRunway
             new[] { "Strap and calm passengers", "Secure cargo", "Fight cabin fires" },
         };
 
+        public static readonly string[] Taglines =
+        {
+            "You fly. You see nothing useful. Trust the voice.",
+            "You see everything. You touch nothing. Talk.",
+            "Many problems, one aisle. Keep them calm.",
+        };
+
+        public static readonly string[] ControlsLine =
+        {
+            "W/S pitch   A/D turn   Shift/Ctrl throttle   G gear   F flaps   1-3 talk",
+            "1-0 callouts   SPACE/V/B read alt/speed/fuel   R/F ping gear/flaps",
+            "WASD walk   hold E interact   1-3 talk",
+        };
+
         public static readonly string[][] Cannot =
         {
             new[] { "See altitude, speed or heading", "See warnings or fuel" },

@@ -54,7 +54,9 @@ namespace BlindRunway
         float sendT;
 
         Match match;                   // server only
-        float simAcc, snapT;
+        float simAcc, snapT, introT;
+        readonly bool[] gotIt = new bool[3];
+        const float IntroTimeout = 30;
         const float SimDt = 0.02f, SnapInterval = 0.05f;
 
         LobbyState srv = new LobbyState();
@@ -101,6 +103,7 @@ namespace BlindRunway
         void Update()
         {
             if (Net.IsServer && srvPhase == Phase.Playing && match != null) ServerTick(Time.deltaTime);
+            if (Net.IsServer && srvPhase == Phase.Intro && (introT += Time.deltaTime) > IntroTimeout) BeginFlight();
             if (Phase != Phase.Playing) return;
             if (Lobby.solo)
             {
@@ -165,7 +168,8 @@ namespace BlindRunway
 
         void OnPhase(PhaseMsg m)
         {
-            if (m.phase == Phase.Playing && Phase != Phase.Playing)
+            bool entering = m.phase == Phase.Intro || m.phase == Phase.Playing;
+            if (entering && Phase != Phase.Intro && Phase != Phase.Playing)
             {
                 Snap = null;
                 Def = Levels.Get(m.level);
@@ -243,6 +247,12 @@ namespace BlindRunway
                     srv.solo = true;
                     StartMatch();
                     return;
+                case "gotit":
+                    if (srvPhase != Phase.Intro) return;
+                    for (int i = 0; i < 3; i++)
+                        if (srv.seat[i] == (long)sender) gotIt[i] = true; // solo host holds all three
+                    if (gotIt[0] && gotIt[1] && gotIt[2]) BeginFlight();
+                    return;
                 case "retry":
                     if (!IsHostSender(sender) || srvPhase != Phase.Result) return;
                     StartMatch();
@@ -293,7 +303,14 @@ namespace BlindRunway
         {
             for (int i = 0; i < 3; i++) srv.ready[i] = false;
             match = new Match(Levels.Get(srv.level));
-            simAcc = snapT = 0;
+            simAcc = snapT = introT = 0;
+            for (int i = 0; i < 3; i++) gotIt[i] = false;
+            SetPhase(Phase.Intro, null);
+        }
+
+        void BeginFlight()
+        {
+            if (srvPhase != Phase.Intro) return;
             SetPhase(Phase.Playing, null);
         }
 
