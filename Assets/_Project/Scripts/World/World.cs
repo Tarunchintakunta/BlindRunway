@@ -158,6 +158,7 @@ namespace BlindRunway
             for (int i = 0; i < 24; i++)
             {
                 float a = i / 24f * Mathf.PI * 2, d = 9000 + (float)rng.NextDouble() * 3000, h = 200 + (float)rng.NextDouble() * 500;
+                if (Mathf.Sin(a) < 0 && Mathf.Abs(Mathf.Cos(a) * d) < 3000) continue; // approach path stays clear
                 Box(new Vector3(Mathf.Cos(a) * d, h / 2, len * 0.5f + Mathf.Sin(a) * d), new Vector3(2500, h, 2500), hill);
             }
         }
