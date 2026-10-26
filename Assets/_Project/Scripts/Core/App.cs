@@ -11,6 +11,7 @@ namespace BlindRunway
         public Screens Screens;
         public Session Session;
         public World World;
+        public Hud Hud;
         Text toast;
         float toastUntil;
 
@@ -37,6 +38,7 @@ namespace BlindRunway
             Net.Init();
             Session = gameObject.AddComponent<Session>();
             World = gameObject.AddComponent<World>();
+            Hud = gameObject.AddComponent<Hud>();
             Screens = gameObject.AddComponent<Screens>();
             Session.Changed += Screens.Route;
         }
