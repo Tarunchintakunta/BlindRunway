@@ -12,6 +12,9 @@ namespace BlindRunway
         Transform cabin, crew;
         public readonly List<Transform> Pax = new List<Transform>();
         readonly List<Renderer> paxBody = new List<Renderer>();
+        public readonly List<Transform> Crates = new List<Transform>();
+        readonly List<Renderer> crateStrap = new List<Renderer>();
+        Transform inner;
         Vector3 shownCrew;
         Role role = Role.None;
         LevelDefinition level;
@@ -41,6 +44,8 @@ namespace BlindRunway
             if (root) Destroy(root.gameObject);
             root = plane = cabin = crew = null;
             Pax.Clear();
+            Crates.Clear();
+            crateStrap.Clear();
             paxBody.Clear();
             role = Role.None;
             RenderSettings.fog = false;
@@ -132,7 +137,7 @@ namespace BlindRunway
             RenderSettings.ambientLight = new Color(0.35f, 0.3f, 0.25f);
             cabin = new GameObject("Cabin").transform;
             cabin.SetParent(root);
-            var inner = new GameObject("Inner").transform; // pivot at cabin middle
+            inner = new GameObject("Inner").transform; // pivot at cabin middle
             inner.SetParent(cabin, false);
             inner.localPosition = new Vector3(0, 0, -8);
 
@@ -168,6 +173,14 @@ namespace BlindRunway
                 paxBody.Add(p.GetComponent<Renderer>());
             }
 
+            var crateColor = level.crateLabel == "BAG" ? Tokens.Hex(0x7A4E2E) : Tokens.Cabin;
+            for (int i = 0; i < level.crates; i++)
+            {
+                var c = Part(inner, new Vector3(0, 0.35f, 12.5f + i * 1.2f), new Vector3(0.7f, 0.7f, 0.7f), crateColor);
+                crateStrap.Add(Part(c.transform, Vector3.zero, new Vector3(1.04f, 0.2f, 1.04f), Tokens.Danger).GetComponent<Renderer>());
+                Crates.Add(c.transform);
+            }
+
             crew = Part(inner, new Vector3(0, 0.9f, 1), new Vector3(0.6f, 0.9f, 0.6f), Tokens.Cabin, 0.4f, PrimitiveType.Capsule).transform;
             Part(crew, new Vector3(0, 1.1f, 0), new Vector3(1.1f, 0.25f, 1.1f), Tokens.Danger, 0, PrimitiveType.Cylinder); // hat
             shownCrew = crew.localPosition;
@@ -192,6 +205,12 @@ namespace BlindRunway
                 var body = paxBody[i].transform;
                 float wobble = p.panic > 0.5f ? Mathf.Sin(Time.time * 25 + i) * p.panic * 0.08f : 0;
                 body.localPosition = new Vector3(p.seat.x + wobble, 0.9f, p.seat.y);
+            }
+            for (int i = 0; i < Crates.Count && i < s.crates.Length; i++)
+            {
+                var c = s.crates[i];
+                Crates[i].localPosition = Vector3.Lerp(Crates[i].localPosition, new Vector3(c.pos.x, 0.35f, c.pos.y), 1 - Mathf.Exp(-10 * dt));
+                crateStrap[i].material.color = c.secured ? Tokens.Success : Tokens.Danger;
             }
             App.I.Cam.transform.position = CabinCam;
             ApplyShake(App.I.Cam.transform, dt);

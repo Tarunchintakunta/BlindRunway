@@ -61,5 +61,22 @@ namespace BlindRunway.Tests
             Assert.IsFalse(c.pax[0].demanding);
             Assert.IsTrue(c.pax[0].strapped);
         }
+
+        [Test]
+        public void LooseCargoSlidesAftAndShiftsCog()
+        {
+            var L = Level(0);
+            L.crates = 2;
+            L.cargoShiftsCog = true;
+            var c = new CabinSim(L);
+            var noseUp = Cruise();
+            noseUp.pitch = 10;
+            float before = c.Cog;
+            for (float t = 0; t < 5; t += Dt) c.Step(Dt, noseUp, false);
+            Assert.Greater(c.Cog, before);
+            WalkAndHold(c, noseUp, c.crates[0].pos, 2f);
+            Assert.AreEqual(1, c.CratesSecured);
+            Assert.AreEqual(0.5f, c.Secure, 0.001f);
+        }
     }
 }

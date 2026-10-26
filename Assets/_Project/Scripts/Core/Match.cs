@@ -26,7 +26,7 @@ namespace BlindRunway
 
         // Navigator only
         public bool nav;
-        public float altFt, kt, vsFpm, hdg, fuel, distM, wind;
+        public float altFt, kt, vsFpm, hdg, fuel, distM, wind, cog;
         public float loc, gs;          // -1..1, + = right of centerline / above the 3 deg path
         public bool glitch;
         public string warnings = "";   // '|' separated
@@ -36,6 +36,7 @@ namespace BlindRunway
         public bool cabin;
         public Vector2 crew;
         public Passenger[] pax = new Passenger[0];
+        public Crate[] crates = new Crate[0];
         public float act;
         public string hint = "";
     }
@@ -108,6 +109,7 @@ namespace BlindRunway
             pilot.gear = gearReq;
             pilot.flaps = flapsReq;
             gearReq = flapsReq = false;
+            Plane.cog = Cabin.Cog;
             Plane.Step(pilot, dt);
             Cabin.Step(dt, Plane, Glitch);
         }
@@ -142,6 +144,7 @@ namespace BlindRunway
             s.cabin = true;
             s.crew = Cabin.crew;
             s.pax = Cabin.pax.ToArray();
+            s.crates = Cabin.crates.ToArray();
             s.act = Cabin.act;
             s.hint = Cabin.hint;
         }
@@ -157,6 +160,7 @@ namespace BlindRunway
             s.fuel = p.fuel;
             s.distM = -p.pos.z;
             s.wind = L.crosswind;
+            s.cog = Plane.cog;
             s.loc = Mathf.Clamp(p.pos.x / 150f, -1, 1);
             s.gs = Mathf.Clamp((p.pos.y - PathHeight(p.pos.z)) / 40f, -1, 1);
             s.warnings = Warnings();

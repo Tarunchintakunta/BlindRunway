@@ -10,6 +10,7 @@ namespace BlindRunway
         Image panicFill, ring, portL, portR;
         Text panicPct, secure, hint;
         readonly List<Text> bubbles = new List<Text>();
+        readonly List<Image> crateRings = new List<Image>();
 
         protected override void BuildRole()
         {
@@ -48,6 +49,15 @@ namespace BlindRunway
                 bubbles.Add(b);
             }
 
+            for (int i = 0; i < level.crates; i++)
+            {
+                var r = Ui.Img(root, Tokens.Success, Ui.Circle);
+                r.type = Image.Type.Filled;
+                r.fillMethod = Image.FillMethod.Radial360;
+                ((RectTransform)r.transform).sizeDelta = new Vector2(56, 56);
+                crateRings.Add(r);
+            }
+
             Hint("WASD  walk     hold E  interact\n1 CABIN SECURE!  2 FIRE!  3 STOP WOBBLING!", new Vector2(0, 0), new Vector2(48, 40), TextAnchor.LowerLeft);
         }
 
@@ -69,6 +79,17 @@ namespace BlindRunway
             hint.text = s.hint.Length > 0 ? "E  " + s.hint : "";
 
             var cam = App.I.Cam;
+            var crates = App.I.World.Crates;
+            for (int i = 0; i < crateRings.Count; i++)
+            {
+                var r = crateRings[i];
+                bool show = i < crates.Count && i < s.crates.Length && s.crates[i].progress > 0 && !s.crates[i].secured;
+                r.enabled = show;
+                if (!show) continue;
+                r.fillAmount = s.crates[i].progress;
+                PlaceAt(r.transform, crates[i].position + Vector3.up * 0.9f);
+            }
+
             var heads = App.I.World.Pax;
             for (int i = 0; i < bubbles.Count; i++)
             {
@@ -81,12 +102,17 @@ namespace BlindRunway
                 var p = s.pax[i];
                 b.text = p.demanding ? "DRINK??" : p.panic > 0.75f ? "WE'RE GOING TO DIE" : p.panic > 0.45f ? "IS THIS NORMAL?" : "";
                 b.color = p.panic > 0.75f ? Tokens.Danger : Tokens.TextPrimary;
-                var sp = cam.WorldToScreenPoint(heads[i].position + Vector3.up * 0.6f);
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(root, sp, null, out var local);
-                var rt = (RectTransform)b.transform;
-                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-                rt.anchoredPosition = local;
+                PlaceAt(b.transform, heads[i].position + Vector3.up * 0.6f);
             }
+        }
+
+        void PlaceAt(Transform t, Vector3 world)
+        {
+            var sp = App.I.Cam.WorldToScreenPoint(world);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(root, sp, null, out var local);
+            var rt = (RectTransform)t;
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = local;
         }
     }
 }
