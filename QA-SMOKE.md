@@ -5,7 +5,7 @@
 | Check | Result |
 |---|---|
 | C# compiles | Yes, against hand-written Unity API stubs with .NET 8 (C# 9). Not yet compiled by the Unity editor. |
-| EditMode tests (`Assets/_Project/Tests/EditMode`) | 22 pass under the same stub harness (flight model, cabin, rules, join codes, snapshot privacy). |
+| EditMode tests (`Assets/_Project/Tests/EditMode`) | 29 pass under the same stub harness (flight model incl. crosswind and L05 fuel budget, cabin, rules, blame cards, progression, glitch privacy, join codes). |
 | Playmode with 3 real clients | **Not run yet.** The Unity editor was not installed on the machine that wrote this code. |
 
 The commit `feat(net): seat ownership rules for role input` says "Playmode smoke: host + 2 clients reach
@@ -19,6 +19,7 @@ checklist below.
 3. Wait for packages to resolve: Netcode for GameObjects 2.1.1, Unity Transport 2.3.0, URP 17.0.3,
    uGUI 2.0, Test Framework.
 4. Optional: menu **Blind Runway > Setup URP Pipeline**. The game also renders on the built-in pipeline.
+   Keep *Project Settings > Player > Active Input Handling* on **Input Manager (Old)** or **Both**.
 5. **Window > General > Test Runner > EditMode > Run All**. Expect all tests green.
 
 If the console shows compile errors, fix those first. Each one is a real bug, because the stub harness
@@ -42,18 +43,18 @@ only knows the API surface it was given.
 
 Netcode needs three separate processes. The quickest way:
 
-1. **File > Build Profiles**, pick macOS or Windows, then **Build**. You can also use the menu
-   **Blind Runway > Build > ...** once that commit lands.
-2. Start the build **three times**. On macOS: `open -n BlindRunway.app` three times.
+1. Menu **Blind Runway > Build > macOS (dev)** or **Windows (dev)**. Output goes to `Builds/`.
+2. Start the build **three times**. On macOS: `open -n Builds/macOS-dev/BlindRunway.app` three times.
    The game runs in the background, so unfocused windows keep simulating.
 3. Window A: **PLAY > HOST A FLIGHT**. Note the join code (top right).
 4. Windows B and C: **PLAY**, leave the code blank (same machine) or type the host's code, then **JOIN**.
 5. Each window takes a different seat and presses **READY**. START stays disabled until 3/3 are ready.
-6. Host presses **START**. Check that:
+6. Host presses **START**. Everyone presses **GOT IT** on their role intro. Check that:
    - [ ] only the Navigator window shows numbers
    - [ ] Navigator ping (R) makes the Pilot's gear switch glow
    - [ ] Cabin panic bar moves, and strapping lowers it
    - [ ] closing one client mid-flight sends everyone back to the lobby with a toast
+   - [ ] Esc opens PAUSED; the flight keeps running
 7. Finish the level. All three windows show the same result and blame cards. Host: RETRY or LOBBY.
 
 ## LAN play

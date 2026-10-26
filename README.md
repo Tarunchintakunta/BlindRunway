@@ -1,35 +1,35 @@
 # BlindRunway
 
 3-player asymmetric co-op airplane game (BOMBANANA-style roles + Dear Passengers chaos).
+*Three seats. Zero shared truth.*
 
 **Roles**
-- **Pilot** — can fly the plane, cannot see instruments
-- **Navigator** — can see instruments / runway / hazards, cannot touch controls
-- **Cabin** — sees passengers/cargo chaos inside, cannot see cockpit
+- **Pilot**: flies the plane, cannot see instruments
+- **Navigator**: sees instruments, runway and hazards, cannot touch the controls
+- **Cabin**: handles the passenger and cargo chaos inside, cannot see the cockpit
 
-**Scope now:** 5 polished levels + lobby + core loop  
-**Later:** levels 6–30
+**Shipped (Act I):** Boot → Main Menu → Route map → Lobby (join code, 3 role cards, ready) → Role intro →
+Levels 1–5 → Success/Fail with blame cards, unlock progression, pause/settings, procedural SFX.
+**Later:** levels 6–30 ([backlog](docs/BACKLOG-L06-L30.md)).
 
-## What's in this zip
+## Run it
+1. Unity Hub > install **Unity 6000.0 LTS** > **Add project from disk** > this folder.
+2. Press Play from `Assets/_Project/Scenes/Boot.unity` (any scene works; everything is built in code).
+3. Testing alone: **PLAY > HOST A FLIGHT > SOLO TEST**, then F1/F2/F3 to swap seats in flight.
+
+- How to play, controls and LAN setup: [HOW-TO-PLAY.md](HOW-TO-PLAY.md)
+- Host + 2 clients test checklist and current verification status: [QA-SMOKE.md](QA-SMOKE.md)
+
+## Layout
 | Path | Purpose |
 |------|---------|
-| `prompts/CLAUDE-MASTER-PROMPT.md` | Paste this into Claude. One agent. Microcommits. Push to `main`. |
-| `docs/GDD.md` | Full game design |
-| `docs/ARCHITECTURE.md` | Unity / C# / networking / folder layout |
-| `docs/UI-DESIGN-SYSTEM.md` | Colors, type, screens, motion |
-| `docs/MICROCOMMIT-PLAN.md` | Ordered commits for levels 1–5 |
-| `levels/L01`–`L05` | Per-level design + win/fail + UI beats |
-| `docs/placeholders/` | SVG/PNG placeholders for UI until art is final |
-| `scripts/` | Helper shell notes for git/Unity |
+| `Assets/_Project/Scripts/` | Game code (`BlindRunway` assembly): Core, Net, Plane, Cabin, Roles, UI, World, Audio |
+| `Assets/_Project/ScriptableObjects/Resources/Levels/` | `L01`–`L05` LevelDefinition assets |
+| `Assets/_Project/Tests/EditMode/` | Flight, cabin, rules, progression, join-code and snapshot-privacy tests |
+| `Assets/_Project/Editor/` | URP setup + Windows/macOS build menu |
+| `docs/` | GDD, architecture (with as-built notes), UI design system, microcommit plan, placeholders |
+| `levels/L01`–`L05` | Per-level design notes |
+| `prompts/CLAUDE-MASTER-PROMPT.md` | The brief this repo was built from |
 
 ## Your machine
 Mac M5 Pro · Unity 6 LTS · C# · .NET SDK · Git · (C++ optional)
-
-## How to run Claude on this
-1. Create empty GitHub repo `BlindRunway` (private or public).
-2. Open Unity Hub → New 3D (URP) project named `BlindRunway` inside a clone of that repo.
-3. Open the repo in Claude / Cursor.
-4. Paste **only** `prompts/CLAUDE-MASTER-PROMPT.md` as the task.
-5. Let **one** agent execute the microcommit plan until Level 5 ships on `main`.
-
-Do **not** spin a second coding agent. Do **not** force-push. Do **not** skip the commit order.

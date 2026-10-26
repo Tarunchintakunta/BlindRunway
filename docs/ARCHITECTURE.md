@@ -57,3 +57,26 @@ BlindRunway/
 ## Performance budget (M-series + low-end Windows)
 - <80 draw calls cabin, <50k tris plane exterior target
 - 60 fps target on integrated GPU
+
+## As built (Act I)
+Where the shipped code differs from the plan above, and why:
+
+- **One scene, everything code-built.** `Boot.unity` is empty; `Bootstrap` (RuntimeInitializeOnLoadMethod)
+  creates the camera, UI canvases, NetworkManager and per-seat worlds. No Lobby/Level scenes and no prefabs,
+  so nothing merges badly. Levels are data: `LevelDefinition` assets in `ScriptableObjects/Resources/Levels`.
+- **Netcode without NetworkObjects.** Netcode for GameObjects + Unity Transport handle connections and
+  approval (exactly 3). Gameplay runs over JSON named messages: clients send 20 Hz input for their seat, and
+  the server simulates `Match` (FlightModel + CabinSim) at 50 Hz and sends **per-seat snapshots** at 20 Hz.
+  This differs from the plan's "Pilot owns plane rigidbody": the server owns all state. That makes the
+  ownership rules (a seat only drives its own inputs) and the information rules (only the Navigator's
+  snapshot carries instrument numbers) one check each in `Session.OnInput` and `Match.SnapshotFor`.
+- **Join code** = host LAN IPv4 as hex. Unity Relay is the upgrade path for internet play.
+- **UI** is uGUI with the built-in font and code-generated rounded/circle/star sprites, coloured by
+  `Tokens` from the design system. TMP with Space Grotesk/Inter/JetBrains Mono is the upgrade path once
+  font assets are imported.
+- **Input** uses the legacy Input Manager (zero setup). Keep *Project Settings > Player > Active Input
+  Handling* on *Input Manager (Old)* or *Both*. Move to the Input System package for remapping.
+- **No Cinemachine**: two hand-rolled cameras (chase for the Pilot, fixed tilting cabin view) were less code.
+- **Audio** is synthesized at startup (`AudioBus`); replace with recorded clips and an AudioMixer later.
+- **Save** is PlayerPrefs (`Progress`): clears, best stars, highest unlocked level. Steam achievements remain
+  a later stub.
