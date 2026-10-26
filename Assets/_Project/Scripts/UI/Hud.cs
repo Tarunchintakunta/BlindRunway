@@ -89,6 +89,7 @@ namespace BlindRunway
             {
                 if (m.ToUpperInvariant().StartsWith(prefix)) coach.Add(m.Substring(prefix.Length).Trim());
                 else if (m.StartsWith("All:")) coach.Add(m.Substring(4).Trim());
+                else if (m.StartsWith("Solo:") && App.I.Session.Lobby.Solo && me == Role.Pilot) coach.Add(m.Substring(5).Trim()); // once: solo starts in the Pilot seat
             }
             if (coach.Count == 0) return;
             coachBox = Ui.Img(root, Tokens.BgPanel.A(0.92f));

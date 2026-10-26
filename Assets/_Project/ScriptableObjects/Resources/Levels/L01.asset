@@ -38,12 +38,14 @@ MonoBehaviour:
   requiredSecure: 0.0
   requiredCrates: 1
   maxPanic: 1.0
+  fuelCallRequired: 0
   objectives:
   - 'Navigator reads altitude every 500 ft'
   - 'Gear down before 500 ft'
   - 'Cabin straps the loose bag'
   - 'Stop in the green gate box'
   coachMarks:
+  - 'Solo: you hold all three seats. F2 Navigator shows the numbers, F3 Cabin, F1 back to the stick.'
   - 'Navigator: press SPACE to read altitude to the Pilot'
   - 'Pilot: you cannot see numbers. Trust the voice.'
   - 'Cabin: walk to the loose bag (aft) and hold E'
