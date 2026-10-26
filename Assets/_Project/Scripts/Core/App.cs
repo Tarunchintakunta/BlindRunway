@@ -10,6 +10,7 @@ namespace BlindRunway
         public Camera Cam;
         public Screens Screens;
         public Session Session;
+        public World World;
         Text toast;
         float toastUntil;
 
@@ -35,6 +36,7 @@ namespace BlindRunway
 
             Net.Init();
             Session = gameObject.AddComponent<Session>();
+            World = gameObject.AddComponent<World>();
             Screens = gameObject.AddComponent<Screens>();
             Session.Changed += Screens.Route;
         }

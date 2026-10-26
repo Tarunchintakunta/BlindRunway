@@ -35,7 +35,7 @@ namespace BlindRunway
 
     public static class Msg
     {
-        public const string Lobby = "br.lobby", Act = "br.act", Phase = "br.phase", Input = "br.input";
+        public const string Lobby = "br.lobby", Act = "br.act", Phase = "br.phase", Input = "br.input", Snap = "br.snap";
     }
 
     // Lobby + match flow. Server half keeps the authoritative state (srv*), client half mirrors what it is sent.
@@ -47,7 +47,13 @@ namespace BlindRunway
         public event Action Changed;
         public event Action<Role, InputMsg> InputReceived; // server: validated input per seat
         public Role SoloView = Role.Pilot;
+        public Snapshot Snap;          // latest snapshot for this client
+        public LevelDefinition Def;    // level being played
         float sendT;
+
+        Match match;                   // server only
+        float simAcc, snapT;
+        const float SimDt = 0.02f, SnapInterval = 0.05f;
 
         LobbyState srv = new LobbyState();
         Phase srvPhase = Phase.Menu;
@@ -74,6 +80,8 @@ namespace BlindRunway
             Net.On(Msg.Phase, (s, j) => OnPhase(JsonUtility.FromJson<PhaseMsg>(j)));
             Net.On(Msg.Act, OnAct);
             Net.On(Msg.Input, OnInput);
+            Net.On(Msg.Snap, (s, j) => Snap = JsonUtility.FromJson<Snapshot>(j));
+            InputReceived += (r, m) => match?.Apply(r, m);
             Net.AcceptingPlayers = () => srvPhase == Phase.Lobby;
         }
 
@@ -85,6 +93,7 @@ namespace BlindRunway
 
         void Update()
         {
+            if (Net.IsServer && srvPhase == Phase.Playing && match != null) ServerTick(Time.deltaTime);
             if (Phase != Phase.Playing) return;
             if (Lobby.solo)
             {
@@ -149,6 +158,11 @@ namespace BlindRunway
 
         void OnPhase(PhaseMsg m)
         {
+            if (m.phase == Phase.Playing && Phase != Phase.Playing)
+            {
+                Snap = null;
+                Def = ScriptableObject.CreateInstance<LevelDefinition>();
+            }
             Phase = m.phase;
             Level = m.level;
             if (!string.IsNullOrEmpty(m.note)) App.I.Toast(m.note);
@@ -246,7 +260,30 @@ namespace BlindRunway
         void StartMatch()
         {
             for (int i = 0; i < 3; i++) srv.ready[i] = false;
+            match = new Match(ScriptableObject.CreateInstance<LevelDefinition>());
+            simAcc = snapT = 0;
             SetPhase(Phase.Playing, null);
+        }
+
+        void ServerTick(float dt)
+        {
+            simAcc += Mathf.Min(dt, 0.25f);
+            while (simAcc >= SimDt)
+            {
+                match.Step(SimDt);
+                simAcc -= SimDt;
+            }
+            snapT += dt;
+            if (snapT < SnapInterval) return;
+            snapT = 0;
+            if (srv.solo)
+            {
+                Net.Send(NetworkManager.ServerClientId, Msg.Snap, match.SnapshotFor(Role.None));
+                return;
+            }
+            for (int i = 0; i < 3; i++)
+                if (srv.seat[i] >= 0 && !Net.Gone.Contains((ulong)srv.seat[i]))
+                    Net.Send((ulong)srv.seat[i], Msg.Snap, match.SnapshotFor((Role)i));
         }
 
         void SetPhase(Phase p, string note)

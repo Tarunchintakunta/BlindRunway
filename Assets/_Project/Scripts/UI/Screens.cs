@@ -90,8 +90,10 @@ namespace BlindRunway
                     break;
                 case Phase.Playing:
                     if (shown != Phase.Playing) Clear(false);
+                    App.I.World.Show(App.I.Session.MyRole, App.I.Session.Def); // seat or solo view changed
                     break;
             }
+            if (phase != Phase.Playing && shown == Phase.Playing) App.I.World.Clear();
             shown = phase;
         }
 
