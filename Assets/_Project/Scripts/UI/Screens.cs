@@ -33,6 +33,11 @@ namespace BlindRunway
         {
             var r = Clear();
             Stars(r, 60);
+            Clouds(r);
+            var plane = PlaneSilhouette(r, new Vector2(0, 360), 0.35f);
+            plane.gameObject.AddComponent<Drift>().Set(90, 0.02f, 1.6f);
+            var glow = Ui.Img(r, Tokens.Cyan.A(0.07f), Ui.Circle);
+            Ui.Place(glow, new Vector2(0.5f, 0.5f), new Vector2(0, 220), new Vector2(1500, 320));
             Logo(r, new Vector2(0, 220));
             string[] labels = { "PLAY", "LEVELS", "SETTINGS", "QUIT" };
             System.Action[] actions =
@@ -406,6 +411,20 @@ namespace BlindRunway
             }
         }
 
+        // Three cloud layers: far ones slow and faint, near ones fast and bold; all lean with the mouse.
+        static void Clouds(Transform r)
+        {
+            var rng = new System.Random(11);
+            for (int layer = 0; layer < 3; layer++)
+                for (int i = 0; i < 5; i++)
+                {
+                    float w = 300 + layer * 160 + (float)rng.NextDouble() * 200;
+                    var c = Ui.Img(r, Tokens.BgPanel.A(0.35f + layer * 0.2f));
+                    Ui.Place(c, new Vector2((float)rng.NextDouble(), 0.12f + layer * 0.08f + (float)rng.NextDouble() * 0.2f), Vector2.zero, new Vector2(w, w * 0.22f));
+                    c.gameObject.AddComponent<Drift>().Set(12 + layer * 22, 0.004f + layer * 0.008f, 0);
+                }
+        }
+
         public static RectTransform PlaneSilhouette(Transform r, Vector2 pos, float scale)
         {
             var p = Ui.Node(r, "plane");
@@ -430,6 +449,29 @@ namespace BlindRunway
             rt.anchoredPosition += Vector2.down * (speed * Time.unscaledDeltaTime);
             rt.Rotate(new Vector3(0, 0, spin * Time.unscaledDeltaTime));
             if (rt.anchoredPosition.y < -1300) Destroy(gameObject);
+        }
+    }
+
+    // Horizontal drift with wrap-around plus mouse parallax; optional gentle bob.
+    public class Drift : MonoBehaviour
+    {
+        float speed, parallax, bob, x;
+        Vector2 start;
+
+        public void Set(float pxPerSecond, float mouseParallax, float bobPx)
+        {
+            speed = pxPerSecond;
+            parallax = mouseParallax;
+            bob = bobPx;
+        }
+
+        void Start() => start = ((RectTransform)transform).anchoredPosition;
+
+        void Update()
+        {
+            x = Mathf.Repeat(x + speed * Time.unscaledDeltaTime + 1400, 2800) - 1400;
+            var mouse = (Vector2)Input.mousePosition - new Vector2(Screen.width, Screen.height) * 0.5f;
+            ((RectTransform)transform).anchoredPosition = start + new Vector2(x, Mathf.Sin(Time.unscaledTime * 1.3f) * bob) - mouse * parallax;
         }
     }
 }
