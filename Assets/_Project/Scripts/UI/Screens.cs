@@ -35,7 +35,7 @@ namespace BlindRunway
             string[] labels = { "PLAY", "LEVELS", "SETTINGS", "QUIT" };
             System.Action[] actions =
             {
-                () => App.I.Toast("Multiplayer arrives next."),
+                Play,
                 () => App.I.Toast("Level select arrives soon."),
                 () => App.I.Toast("Settings arrive soon."),
                 Application.Quit,
@@ -46,6 +46,41 @@ namespace BlindRunway
                 Ui.Place(b, new Vector2(0.5f, 0.5f), new Vector2(0, 40 - i * 92), new Vector2(420, 76));
                 Ui.In(b, 0.08f * i);
             }
+        }
+
+        public void Play()
+        {
+            var r = Clear();
+            Stars(r, 60);
+            var h = Ui.Label(r, "FIND YOUR CREW", 64, Tokens.TextPrimary, TextAnchor.MiddleCenter, FontStyle.Bold);
+            Ui.Place(h, new Vector2(0.5f, 0.5f), new Vector2(0, 300), new Vector2(1200, 90));
+
+            var host = Ui.Btn(r, "HOST A FLIGHT", Host);
+            Ui.Place(host, new Vector2(0.5f, 0.5f), new Vector2(0, 140), new Vector2(520, 84));
+
+            var hint = Ui.Label(r, "or join with the host's code (blank = this computer)", 26, Tokens.TextMuted);
+            Ui.Place(hint, new Vector2(0.5f, 0.5f), new Vector2(0, 30), new Vector2(1200, 40));
+            var field = Ui.Field(r, "C0A8-0105");
+            field.characterLimit = 15;
+            Ui.Place(field, new Vector2(0.5f, 0.5f), new Vector2(-110, -50), new Vector2(300, 76));
+            var join = Ui.Btn(r, "JOIN", () => Join(field.text), Tokens.BgPanel);
+            Ui.Place(join, new Vector2(0.5f, 0.5f), new Vector2(170, -50), new Vector2(200, 76));
+
+            var back = Ui.Btn(r, "BACK", Menu, Tokens.BgPanel);
+            Ui.Place(back, new Vector2(0, 0), new Vector2(48, 48), new Vector2(220, 70));
+        }
+
+        void Host()
+        {
+            if (Net.Host()) App.I.Toast("Hosting. Join code " + Net.ToCode(Net.LocalIp()));
+            else App.I.Toast("Could not host (is port 7777 busy?)");
+        }
+
+        void Join(string code)
+        {
+            if (!Net.TryParseCode(code, out var ip)) { App.I.Toast("That join code looks wrong."); return; }
+            if (Net.Join(ip)) App.I.Toast("Connecting to " + ip + "...");
+            else App.I.Toast("Could not start client.");
         }
 
         // ---- shared visuals ----

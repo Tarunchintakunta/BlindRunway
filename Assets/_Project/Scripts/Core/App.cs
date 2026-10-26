@@ -32,6 +32,7 @@ namespace BlindRunway
             toast = Ui.Label(overlay, "", 28, Tokens.TextPrimary);
             Ui.Place(toast, new Vector2(0.5f, 0), new Vector2(0, 60), new Vector2(1400, 60));
 
+            Net.Init();
             Screens = gameObject.AddComponent<Screens>();
         }
 
