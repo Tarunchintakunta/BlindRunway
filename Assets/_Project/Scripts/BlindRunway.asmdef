@@ -1,0 +1,11 @@
+{
+    "name": "BlindRunway",
+    "rootNamespace": "BlindRunway",
+    "references": [
+        "Unity.Netcode.Runtime",
+        "Unity.Networking.Transport",
+        "Unity.Collections",
+        "UnityEngine.UI"
+    ],
+    "autoReferenced": true
+}

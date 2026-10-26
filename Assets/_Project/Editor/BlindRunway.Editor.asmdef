@@ -1,0 +1,12 @@
+{
+    "name": "BlindRunway.Editor",
+    "rootNamespace": "BlindRunway.EditorTools",
+    "references": [
+        "BlindRunway",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}
