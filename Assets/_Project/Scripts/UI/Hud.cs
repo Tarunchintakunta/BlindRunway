@@ -19,6 +19,27 @@ namespace BlindRunway
             role = r;
             current = r == Role.Pilot ? new PilotHud() : r == Role.Navigator ? new NavigatorHud() : r == Role.Cabin ? new CabinHud() : (RoleHud)null;
             current?.Build(root, L);
+            if (App.I.Session.Lobby.Solo) SeatBar(r);
+        }
+
+        static readonly string[] Short = { "PILOT", "NAV", "CABIN" };
+
+        // Solo hot-seat bar: always shows which seat you're in; click or F1-F3 to switch.
+        void SeatBar(Role active)
+        {
+            var bar = Ui.Img(root, Tokens.BgVoid.A(0.85f));
+            Ui.Place(bar, new Vector2(0.5f, 0), new Vector2(0, 10), new Vector2(560, 60));
+            for (int i = 0; i < 3; i++)
+            {
+                var seat = (Role)i;
+                var tint = Roles.Tint(seat);
+                bool on = seat == active;
+                var pill = Ui.Btn(bar.transform, $"F{i + 1}  {Short[i]}", () => App.I.Session.SwitchSeat(seat), on ? tint : Tokens.BgPanel);
+                Ui.Place(pill, new Vector2(0.5f, 0.5f), new Vector2((i - 1) * 182, 0), new Vector2(170, 44));
+                var label = pill.GetComponentInChildren<Text>();
+                label.fontSize = 22;
+                if (!on) label.color = tint;
+            }
         }
 
         public void Clear()
