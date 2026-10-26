@@ -10,7 +10,7 @@ namespace BlindRunway.Tests
         static FlightModel NewPlane() => new FlightModel(new Vector3(0, 460, -9000), 70, 0, 600, 2400);
 
         // Crude "perfect navigator": hold a 3° path to a point 300 m past the threshold, then cut power.
-        static void FlyApproach(FlightModel f, float maxSeconds = 400)
+        static void FlyApproach(FlightModel f, float wind = 0, float maxSeconds = 400)
         {
             for (float t = 0; t < maxSeconds && !f.Done; t += Dt)
             {
@@ -20,6 +20,8 @@ namespace BlindRunway.Tests
                 if (f.pos.y < 8) wantPitch = -1.5f; // flare: gentle sink
                 i.pitch = Mathf.Clamp((wantPitch - f.pitch) * 0.5f, -1, 1);
                 i.throttle = f.onGround ? -1 : Mathf.Clamp((65 - f.speed) * 0.2f, -1, 1);
+                float wantYaw = f.onGround ? 0 : Mathf.Clamp(-f.pos.x * 0.08f - wind / f.speed * Mathf.Rad2Deg, -12, 12); // crab into the wind
+                i.yaw = Mathf.Clamp((wantYaw - f.yaw) * 0.3f, -1, 1);
                 f.Step(i, Dt);
             }
         }
@@ -62,6 +64,16 @@ namespace BlindRunway.Tests
             for (int k = 0; k < 1000; k++) f.Step(new InputMsg { throttle = 1 }, Dt);
             Assert.AreEqual(0f, f.fuel, 0.0001f);
             Assert.AreEqual(0f, f.throttle, 0.0001f);
+        }
+
+        [Test]
+        public void CrosswindApproachIsLandableWithCorrections()
+        {
+            var f = new FlightModel(new Vector3(0, 460, -10500), 70, 4, 600, 2400);
+            f.Step(new InputMsg { gear = true, flaps = true }, Dt);
+            FlyApproach(f, 4);
+            Assert.IsNull(f.crash);
+            Assert.IsTrue(f.stopped);
         }
 
         [Test]

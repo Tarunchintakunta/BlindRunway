@@ -96,5 +96,21 @@ namespace BlindRunway.Tests
             Assert.IsTrue(c.fireOut);
             Assert.IsFalse(c.fireOn);
         }
+
+        [Test]
+        public void ThirstyPassengerBlocksAisleUntilServed()
+        {
+            var c = new CabinSim(Level(4, 1));
+            var f = Cruise();
+            c.Apply(new InputMsg { moveZ = 1 });
+            for (float t = 0; t < 5; t += Dt) c.Step(Dt, f, false, 0);
+            Assert.Less(c.crew.y, c.pax[0].seat.y);
+            c.Apply(new InputMsg { interact = true });
+            for (float t = 0; t < 1.5f; t += Dt) c.Step(Dt, f, false, 0);
+            Assert.IsFalse(c.pax[0].demanding);
+            c.Apply(new InputMsg { moveZ = 1 });
+            for (float t = 0; t < 5; t += Dt) c.Step(Dt, f, false, 0);
+            Assert.Greater(c.crew.y, 10);
+        }
     }
 }

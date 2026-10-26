@@ -258,7 +258,8 @@ namespace BlindRunway
                 paxBody[i].material.color = Color.Lerp(p.strapped ? Tokens.Hex(0x6E8FB8) : Tokens.Hex(0xC9B8A6), Tokens.Danger, p.panic);
                 var body = paxBody[i].transform;
                 float wobble = p.panic > 0.5f ? Mathf.Sin(Time.time * 25 + i) * p.panic * 0.08f : 0;
-                body.localPosition = new Vector3(p.seat.x + wobble, 0.9f, p.seat.y);
+                float x = p.demanding ? p.seat.x * 0.15f : p.seat.x; // standing in the aisle
+                body.localPosition = new Vector3(x + wobble, p.demanding ? 1.2f : 0.9f, p.seat.y);
             }
             for (int i = 0; i < Crates.Count && i < s.crates.Length; i++)
             {

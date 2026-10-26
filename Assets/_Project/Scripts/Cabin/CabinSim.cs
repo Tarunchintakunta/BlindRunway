@@ -117,6 +117,8 @@ namespace BlindRunway
             var move = Vector2.ClampMagnitude(new Vector2(input.moveX, input.moveZ), 1);
             crew += move * (Walk * dt);
             crew = new Vector2(Mathf.Clamp(crew.x, -1.6f, 1.6f), Mathf.Clamp(crew.y, 0.5f, 15.5f));
+            foreach (var p in pax) // a thirsty passenger stands in the aisle: serve them to get past
+                if (p.demanding && crew.y > p.seat.y - 0.7f && crew.y < p.seat.y + 0.2f) crew.y = p.seat.y - 0.7f;
             Interact(dt);
 
             int loose = crates.Count - CratesSecured;

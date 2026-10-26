@@ -58,6 +58,16 @@ namespace BlindRunway
             Ui.Place(Ui.Label(f, "HIGH", 18, Tokens.TextMuted), new Vector2(0.5f, 1), new Vector2(0, -40), new Vector2(100, 24));
             Ui.Place(Ui.Label(f, "LOW", 18, Tokens.TextMuted), new Vector2(0.5f, 0), new Vector2(0, 14), new Vector2(100, 24));
 
+            if (level.crosswind != 0) // wind vector: arrow length scales with strength
+            {
+                var arrow = Ui.Img(f, Tokens.Amber, null);
+                float len = 40 + Mathf.Abs(level.crosswind) * 20;
+                Ui.Place(arrow, new Vector2(0.5f, 0), new Vector2(0, 50), new Vector2(len, 6));
+                var head = Ui.Label(f, level.crosswind > 0 ? ">" : "<", 40, Tokens.Amber, TextAnchor.MiddleCenter, FontStyle.Bold);
+                Ui.Place(head, new Vector2(0.5f, 0), new Vector2(Mathf.Sign(level.crosswind) * len / 2, 50), new Vector2(40, 50));
+                Ui.Place(Ui.Label(f, "WIND", 18, Tokens.Amber), new Vector2(0.5f, 0), new Vector2(0, 74), new Vector2(100, 24));
+            }
+
             warnings = Ui.Pulsing(Ui.Label(root, "", 40, Tokens.Amber, TextAnchor.MiddleCenter, FontStyle.Bold));
             Ui.Place(warnings, new Vector2(0.5f, 0.5f), new Vector2(-40, -250), new Vector2(900, 60));
 
