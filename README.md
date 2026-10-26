@@ -8,14 +8,14 @@
 - **Navigator**: sees instruments, runway and hazards, cannot touch the controls
 - **Cabin**: handles the passenger and cargo chaos inside, cannot see the cockpit
 
-**Shipped (Act I):** Boot → Main Menu → Route map → Lobby (join code, 3 role cards, ready) → Role intro →
+**Shipped (Act I):** Boot → Main Menu (Play Alone / Play With Friends) → Route map → Lobby (join code, 3 role cards, ready) → Role intro →
 Levels 1–5 → Success/Fail with blame cards, unlock progression, pause/settings, procedural SFX.
 **Later:** levels 6–30 ([backlog](docs/BACKLOG-L06-L30.md)).
 
 ## Run it
 1. Unity Hub > install **Unity 6000.6.7f1** > **Add project from disk** > this folder.
 2. Press Play from `Assets/_Project/Scenes/Boot.unity` (any scene works; everything is built in code).
-3. Testing alone: **PLAY > HOST A FLIGHT > SOLO TEST**, then F1/F2/F3 to swap seats in flight.
+3. Alone: **PLAY ALONE** > route > **FLY SOLO**, then F1/F2/F3 (or the seat bar) to switch seats. With friends: **PLAY WITH FRIENDS**.
 
 - How to play, controls and LAN setup: [HOW-TO-PLAY.md](HOW-TO-PLAY.md)
 - Host + 2 clients test checklist and current verification status: [QA-SMOKE.md](QA-SMOKE.md)

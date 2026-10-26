@@ -53,12 +53,28 @@ The blame cards then tell you whose fault it was (affectionately).
 
 Clearing a route unlocks the next one for the player who hosted it. Routes 6–30 are on the backlog.
 
+## Playing alone
+
+**Main Menu > PLAY ALONE**, pick an unlocked route, **FLY SOLO**.
+
+You hold all three seats, but only one is active at a time. Switch seats with `F1` Pilot, `F2` Navigator,
+`F3` Cabin, or with the seat bar at the bottom of the screen. The seat you leave goes idle: no stick held,
+nobody walking. The rules don't change:
+
+- The Pilot seat still shows **no numbers**. To read altitude, switch to the Navigator (F2), then hop back.
+- Same levels, timers, gate boxes, cabin rules and blame cards as with friends.
+- Clearing a route alone unlocks the next one, same as hosting.
+- `Esc` in flight: Resume, switch seat, Settings, Quit to menu. The plane keeps flying while paused.
+
+Solo runs a host-only server on your own computer (loopback). No network, no firewall prompt, and it
+doesn't clash with a friend hosting on the same machine.
+
 ## Playing with friends
 
 ### Same network (LAN)
-1. Host: **PLAY > HOST A FLIGHT** (or pick a route under **LEVELS** first). Share the **join code**
+1. Host: **PLAY WITH FRIENDS > HOST A FLIGHT** (or **LEVELS** > route > **HOST FOR FRIENDS**). Share the **join code**
    shown top-right, for example `C0A8-0105`.
-2. Friends: **PLAY**, type the code, then **JOIN**. A raw IP address also works.
+2. Friends: **PLAY WITH FRIENDS**, type the code, then **JOIN**. A raw IP address also works.
 3. Everyone takes a seat and presses **READY**. The host presses **START**.
 
 The host's firewall must allow UDP port **7777**. Internet play needs Unity Relay, which is not wired up.
@@ -68,6 +84,6 @@ Build once with **Blind Runway > Build > macOS (dev)** or **Windows (dev)**, the
 times. On macOS use `open -n Builds/macOS-dev/BlindRunway.app`. Leave the join code blank in the joining
 windows. See [QA-SMOKE.md](QA-SMOKE.md) for the full checklist.
 
-### Alone (development only)
-In the editor or a dev build, the lobby shows **SOLO TEST** when you're the only player. You hold all
-three seats; press `F1`/`F2`/`F3` in flight to switch between them.
+### Dev shortcut
+In the editor or a dev build, a lobby with only you in it also shows **SOLO TEST**. It turns that lobby
+into a solo flight. Players should use **PLAY ALONE**.

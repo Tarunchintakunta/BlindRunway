@@ -5,8 +5,8 @@
 | Check | Result |
 |---|---|
 | Compiles in Unity | Yes. Unity **6000.6.7f1** batchmode, no errors or warnings from project code. |
-| EditMode tests (`Tests/EditMode`) | **30/30 pass** in Unity: flight model (incl. crosswind and the L05 fuel budget), cabin, rules, blame cards, progression, glitch privacy, join codes, and the real L01–L05 assets loading. |
-| PlayMode smoke (`Tests/PlayMode`) | **1/1 pass** in Unity: boot, host over Netcode, SOLO TEST, intro, flight with live snapshots, swap all three seats, leave. |
+| EditMode tests (`Tests/EditMode`) | **34/34 pass** in Unity: flight model (incl. crosswind and the L05 fuel budget), cabin, rules, blame cards, progression, glitch privacy, join codes, real L01–L05 assets, and solo MatchMode/seat ownership. |
+| PlayMode smoke (`Tests/PlayMode`) | **2/2 pass** in Unity: (1) boot → Play Alone → intro → flight → swap all three seats, each getting only its own data → menu; (2) Play Alone L01 → timer fail → three blame cards → retry → menu. |
 | Three separate clients over the network | **Pass (automated).** `scripts/smoke-3clients.sh` runs three macOS player processes (host/Pilot, Navigator, Cabin) on 127.0.0.1 through lobby → ready → start → intro → flight. Each seat confirms it gets only its own data. The first run caught a race in the driver, now fixed. |
 | Full human playthrough of L1–L5 | **Not done.** Feel, balance and the visuals still need a person at three keyboards (checklist below). |
 
@@ -41,19 +41,22 @@ scripts/smoke-3clients.sh   # prints [SMOKE] PASS for seats 0,1,2; exit code 0
 
 Netcode 2.1.1 does not compile on 6000.6; 2.13.3 does. Don't downgrade.
 
-## Solo smoke (one editor, 2 minutes)
+## Solo play smoke (one editor, 2 minutes)
 
 1. Open `Assets/_Project/Scenes/Boot.unity` and press Play. (Play from any scene also works.)
-2. Splash > Main Menu > **PLAY** > **HOST A FLIGHT**.
-3. In the lobby, press **SOLO TEST (F1-F3 swap seats)**. This button only appears in the editor and dev
-   builds.
-4. During the level, F1 shows Pilot, F2 Navigator, F3 Cabin.
+2. Splash > Main Menu > **PLAY ALONE** > Level 01 > **FLY SOLO**.
+3. The intro shows all three seats (first solo flight of the session only). Press **GOT IT - FLY**.
+4. During the level, F1 / F2 / F3 or the bottom seat bar switches between Pilot, Navigator and Cabin.
+   Esc offers the same switch.
    - Pilot: no numbers anywhere. W/S pitch, A/D turn, Shift/Ctrl throttle, G gear, F flaps.
    - Navigator: altitude, speed and other values update. SPACE reads altitude, and the callout shows on
      the Pilot HUD.
    - Cabin: WASD walks. Hold E near a passenger to strap them in, and near the bag to secure it.
 5. Land with gear down and cut the throttle (Ctrl). Stop between the green bars to see the **LANDED**
-   screen. With gear up you get **WHY WE DIED** and a BELLY LANDER card.
+   screen. With gear up you get **WHY WE DIED** and a BELLY LANDER card. **MENU** returns to the main menu.
+
+Solo passing does **not** cover multiplayer. Before a release, also run the three-client checklist below
+(automated script plus a human pass).
 
 ## Three-client smoke (the real test)
 
@@ -62,8 +65,8 @@ Netcode needs three separate processes. The quickest way:
 1. Menu **Blind Runway > Build > macOS (dev)** or **Windows (dev)**. Output goes to `Builds/`.
 2. Start the build **three times**. On macOS: `open -n Builds/macOS-dev/BlindRunway.app` three times.
    The game runs in the background, so unfocused windows keep simulating.
-3. Window A: **PLAY > HOST A FLIGHT**. Note the join code (top right).
-4. Windows B and C: **PLAY**, leave the code blank (same machine) or type the host's code, then **JOIN**.
+3. Window A: **PLAY WITH FRIENDS > HOST A FLIGHT**. Note the join code (top right).
+4. Windows B and C: **PLAY WITH FRIENDS**, leave the code blank (same machine) or type the host's code, then **JOIN**.
 5. Each window takes a different seat and presses **READY**. START stays disabled until 3/3 are ready.
 6. Host presses **START**. Everyone presses **GOT IT** on their role intro. Check that:
    - [ ] only the Navigator window shows numbers
