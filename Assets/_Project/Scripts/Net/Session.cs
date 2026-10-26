@@ -138,9 +138,9 @@ namespace BlindRunway
 
         void Host(bool solo)
         {
-            if (!Net.Host())
+            if (!Net.Host(solo))
             {
-                App.I.Toast("Could not host (is port 7777 busy?)");
+                App.I.Toast(solo ? "Could not start a solo flight." : "Could not host (is port 7777 busy?)");
                 return;
             }
             srv = new LobbyState { code = Net.ToCode(Net.LocalIp()), level = Mathf.Min(PickedLevel, Progress.Unlocked) };

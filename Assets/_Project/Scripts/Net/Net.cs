@@ -49,9 +49,12 @@ namespace BlindRunway
         public static bool Running => NM != null && NM.IsListening;
         public static bool IsServer => NM != null && NM.IsServer;
 
-        public static bool Host()
+        // Friends: listen on every interface at the well-known port. Solo: loopback only on a random high port,
+        // so it works offline, never trips the firewall prompt, and never collides with a friends' host on 7777.
+        public static bool Host(bool solo = false)
         {
-            transport.SetConnectionData("127.0.0.1", Port, "0.0.0.0");
+            if (solo) transport.SetConnectionData("127.0.0.1", (ushort)UnityEngine.Random.Range(49152, 65000), "127.0.0.1");
+            else transport.SetConnectionData("127.0.0.1", Port, "0.0.0.0");
             Gone.Clear();
             if (!NM.StartHost()) return false;
             RegisterHandlers();
