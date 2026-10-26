@@ -7,7 +7,8 @@
 | Compiles in Unity | Yes. Unity **6000.6.7f1** batchmode, no errors or warnings from project code. |
 | EditMode tests (`Tests/EditMode`) | **30/30 pass** in Unity: flight model (incl. crosswind and the L05 fuel budget), cabin, rules, blame cards, progression, glitch privacy, join codes, and the real L01–L05 assets loading. |
 | PlayMode smoke (`Tests/PlayMode`) | **1/1 pass** in Unity: boot, host over Netcode, SOLO TEST, intro, flight with live snapshots, swap all three seats, leave. |
-| Three separate clients over the network | **Not run yet.** This needs three processes and a human at the controls (checklist below). |
+| Three separate clients over the network | **Pass (automated).** `scripts/smoke-3clients.sh` runs three macOS player processes (host/Pilot, Navigator, Cabin) on 127.0.0.1 through lobby → ready → start → intro → flight. Each seat confirms it gets only its own data. The first run caught a race in the driver, now fixed. |
+| Full human playthrough of L1–L5 | **Not done.** Feel, balance and the visuals still need a person at three keyboards (checklist below). |
 
 The commit `feat(net): seat ownership rules for role input` says "Playmode smoke: host + 2 clients reach
 lobby…". That claim was premature: no playmode run existed when it was written. The real-editor runs above
@@ -19,6 +20,13 @@ Re-run from a terminal:
 U=/Applications/Unity/Hub/Editor/6000.6.7f1/Unity.app/Contents/MacOS/Unity
 $U -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testResults edit.xml -logFile -
 $U -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults play.xml -logFile -
+```
+
+Automated three-client run:
+
+```bash
+# Blind Runway > Build > macOS (dev), then:
+scripts/smoke-3clients.sh   # prints [SMOKE] PASS for seats 0,1,2; exit code 0
 ```
 
 ## First open
