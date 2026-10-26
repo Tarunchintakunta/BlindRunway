@@ -94,11 +94,12 @@ namespace BlindRunway
             {
                 int idx = i;
                 var def = Levels.Get(i);
-                bool sel = i == focus;
-                var glow = Ui.Img(r, Tokens.Cyan.A(sel ? 0.25f : 0.08f), Ui.Circle);
+                bool sel = i == focus, open = Progress.IsUnlocked(i), done = Progress.Cleared(i);
+                var lit = Progress.AllCleared ? Tokens.Success : Tokens.Cyan; // finale: every airport lights up
+                var glow = Ui.Img(r, (done ? Tokens.Success : lit).A(sel ? 0.3f : done ? 0.2f : 0.08f), Ui.Circle);
                 Ui.Place(glow, new Vector2(0.5f, 0.5f), pts[i], new Vector2(150, 150));
                 if (sel) Ui.Pulsing(glow);
-                var node = Ui.Img(r, sel ? Tokens.Cyan : Tokens.BgPanel, Ui.Circle);
+                var node = Ui.Img(r, sel ? lit : open ? Tokens.BgPanel : Tokens.BgVoid, Ui.Circle);
                 node.raycastTarget = true;
                 Ui.Place(node, new Vector2(0.5f, 0.5f), pts[i], new Vector2(96, 96));
                 var b = node.gameObject.AddComponent<Button>();
@@ -109,11 +110,13 @@ namespace BlindRunway
                 for (int k = 0; k < 8; k++) // airport lights ring
                 {
                     float a = k / 8f * Mathf.PI * 2;
-                    var lamp = Ui.Img(node.transform, Tokens.Cabin, Ui.Circle);
+                    var lamp = Ui.Img(node.transform, open ? Tokens.Cabin : Tokens.TextMuted.A(0.3f), Ui.Circle);
                     Ui.Place(lamp, new Vector2(0.5f, 0.5f), new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 60, new Vector2(8, 8));
                 }
                 Ui.Fill(Ui.Label(node.transform, $"{def.number:00}", 34, sel ? Tokens.BgVoid : Tokens.TextPrimary, TextAnchor.MiddleCenter, FontStyle.Bold).rectTransform);
-                var name = Ui.Label(r, def.title.ToUpperInvariant(), 22, sel ? Tokens.TextPrimary : Tokens.TextMuted, TextAnchor.UpperCenter, FontStyle.Bold);
+                var tag = open ? def.title.ToUpperInvariant() : "LOCKED";
+                if (done) tag += "\n" + new string('*', Progress.Stars(i)) + new string('.', 3 - Progress.Stars(i));
+                var name = Ui.Label(r, tag, 22, sel ? Tokens.TextPrimary : Tokens.TextMuted, TextAnchor.UpperCenter, FontStyle.Bold);
                 Ui.Place(name, new Vector2(0.5f, 0.5f), pts[i] + new Vector2(0, -95), new Vector2(260, 60));
             }
 
@@ -126,11 +129,13 @@ namespace BlindRunway
             var obj = Ui.Label(t, "-  " + string.Join("\n-  ", f.objectives), 22, Tokens.TextMuted, TextAnchor.UpperLeft);
             Ui.Place(obj, new Vector2(0, 1), new Vector2(32, -130), new Vector2(700, 120));
 
-            var host = Ui.Btn(r, "HOST THIS ROUTE", () =>
+            bool canHost = Progress.IsUnlocked(focus);
+            var host = Ui.Btn(r, canHost ? "HOST THIS ROUTE" : $"CLEAR LEVEL {focus:00} FIRST", () =>
             {
                 s.PickedLevel = focus;
                 s.Host();
-            });
+            }, canHost ? Tokens.Cyan : Tokens.BgPanel);
+            host.interactable = canHost;
             Ui.Place(host, new Vector2(1, 0), new Vector2(-48, 48), new Vector2(380, 76));
             var back = Ui.Btn(r, "BACK", Menu, Tokens.BgPanel);
             Ui.Place(back, new Vector2(0, 0), new Vector2(48, 48), new Vector2(220, 70));
@@ -246,7 +251,7 @@ namespace BlindRunway
                 var prev = Ui.Btn(r, "<", () => App.I.Session.Act("level", 0, L.level - 1), Tokens.BgPanel);
                 Ui.Place(prev, new Vector2(0.5f, 1), new Vector2(-560, -55), new Vector2(64, 60));
             }
-            if (L.level < Levels.Count - 1)
+            if (L.level < Progress.Unlocked)
             {
                 var next = Ui.Btn(r, ">", () => App.I.Session.Act("level", 0, L.level + 1), Tokens.BgPanel);
                 Ui.Place(next, new Vector2(0.5f, 1), new Vector2(560, -55), new Vector2(64, 60));
@@ -369,8 +374,15 @@ namespace BlindRunway
             }
             var lobby = Ui.Btn(r, "LOBBY", () => s.Act("lobby"), Tokens.BgPanel);
             Ui.Place(lobby, new Vector2(1, 0), new Vector2(-340, 48), new Vector2(260, 76));
-            var retry = Ui.Btn(r, "RETRY", () => s.Act("retry"));
-            Ui.Place(retry, new Vector2(1, 0), new Vector2(-48, 48), new Vector2(260, 76));
+            bool next = res.win && res.level + 1 <= Progress.Unlocked && res.level + 1 < Levels.Count;
+            var retry = Ui.Btn(r, "RETRY", () => s.Act("retry"), next ? Tokens.BgPanel : Tokens.Cyan);
+            Ui.Place(retry, new Vector2(1, 0), new Vector2(next ? -340 : -48, 48), new Vector2(260, 76));
+            ((RectTransform)lobby.transform).anchoredPosition = new Vector2(next ? -632 : -340, 48);
+            if (next)
+            {
+                var go = Ui.Btn(r, "NEXT ROUTE", () => s.Act("next"));
+                Ui.Place(go, new Vector2(1, 0), new Vector2(-48, 48), new Vector2(260, 76));
+            }
         }
 
         // ---- shared visuals ----

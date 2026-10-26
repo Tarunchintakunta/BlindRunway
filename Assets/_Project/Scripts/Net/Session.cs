@@ -83,7 +83,11 @@ namespace BlindRunway
             Net.On(Msg.Act, OnAct);
             Net.On(Msg.Input, OnInput);
             Net.On(Msg.Snap, (s, j) => Snap = JsonUtility.FromJson<Snapshot>(j));
-            Net.On(Msg.Result, (s, j) => Result = JsonUtility.FromJson<ResultMsg>(j));
+            Net.On(Msg.Result, (s, j) =>
+            {
+                Result = JsonUtility.FromJson<ResultMsg>(j);
+                Progress.Record(Result);
+            });
             InputReceived += (r, m) => match?.Apply(r, m);
             Net.AcceptingPlayers = () => srvPhase == Phase.Lobby;
         }
@@ -126,7 +130,7 @@ namespace BlindRunway
                 App.I.Toast("Could not host (is port 7777 busy?)");
                 return;
             }
-            srv = new LobbyState { code = Net.ToCode(Net.LocalIp()), level = PickedLevel };
+            srv = new LobbyState { code = Net.ToCode(Net.LocalIp()), level = Mathf.Min(PickedLevel, Progress.Unlocked) };
             SetPhase(Phase.Lobby, null);
         }
 
@@ -227,7 +231,7 @@ namespace BlindRunway
                     break;
                 case "level":
                     if (!IsHostSender(sender) || srvPhase != Phase.Lobby) return;
-                    srv.level = Mathf.Clamp(a.level, 0, Levels.Count - 1);
+                    srv.level = Mathf.Clamp(a.level, 0, Progress.Unlocked); // host's unlocks gate the campaign
                     break;
                 case "ready":
                     if (srvPhase != Phase.Lobby || mine < 0) return;
@@ -241,6 +245,11 @@ namespace BlindRunway
                     return;
                 case "retry":
                     if (!IsHostSender(sender) || srvPhase != Phase.Result) return;
+                    StartMatch();
+                    return;
+                case "next":
+                    if (!IsHostSender(sender) || srvPhase != Phase.Result || srv.level + 1 > Progress.Unlocked) return;
+                    srv.level++;
                     StartMatch();
                     return;
                 case "lobby":
