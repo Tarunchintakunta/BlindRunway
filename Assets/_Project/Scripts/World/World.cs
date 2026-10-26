@@ -107,6 +107,8 @@ namespace BlindRunway
             for (float z = -900; z < 0; z += 60) Box(new Vector3(0, 1, z), new Vector3(2, 2, 2), Tokens.TextPrimary, 4);
             Box(new Vector3(0, 1, -300), new Vector3(30, 1, 1), Tokens.TextPrimary, 4);
 
+            BuildAirport(len);
+
             var rng = new System.Random(level.number);
             for (int i = 0; i < 260; i++)
             {
@@ -124,6 +126,40 @@ namespace BlindRunway
             Part(plane, new Vector3(0, 0.6f, -10.5f), new Vector3(9, 0.3f, 2.5f), hull);
             Part(plane, new Vector3(0, 0.4f, 9), new Vector3(2.6f, 1.2f, 3), Tokens.Cyan, 1.5f); // cockpit glow
             shownPos = new Vector3(0, level.startAltitude, -level.startDistance);
+        }
+
+        // Taxiway, apron, terminal, tower, hangars, windsock and a ring of hills: readable silhouettes at night.
+        void BuildAirport(float len)
+        {
+            var concrete = Tokens.Hex(0x1C2026);
+            Box(new Vector3(90, 0.02f, len * 0.5f), new Vector3(20, 0.1f, len), concrete);                  // parallel taxiway
+            for (float z = len * 0.25f; z < len; z += len * 0.25f)
+                Box(new Vector3(45, 0.02f, z), new Vector3(70, 0.1f, 18), concrete);                         // connectors
+            Box(new Vector3(190, 0.02f, len * 0.5f), new Vector3(180, 0.1f, 600), concrete);                // apron
+            for (float z = 0; z <= len; z += 60) Box(new Vector3(79, 0.4f, z), new Vector3(0.6f, 0.6f, 0.6f), Tokens.Cyan, 3); // taxi edge lights
+
+            var building = Tokens.Hex(0x2A3142);
+            Box(new Vector3(300, 12, len * 0.5f), new Vector3(40, 24, 420), building);                       // terminal
+            for (int i = 0; i < 12; i++)
+                Box(new Vector3(279, 14, len * 0.5f - 190 + i * 35), new Vector3(1, 6, 18), Tokens.Cabin, 2); // terminal windows
+            Box(new Vector3(260, 25, len * 0.5f + 300), new Vector3(8, 50, 8), building);                    // tower
+            Box(new Vector3(260, 54, len * 0.5f + 300), new Vector3(16, 8, 16), Tokens.Cyan, 1.5f);          // tower cab
+            Box(new Vector3(260, 60, len * 0.5f + 300), new Vector3(1.5f, 6, 1.5f), Tokens.Danger, 4);        // beacon
+            for (int i = 0; i < 3; i++)
+                Box(new Vector3(230, 10, len * 0.5f - 420 - i * 90), new Vector3(70, 20, 70), Tokens.Hex(0x232A38)); // hangars
+
+            // windsock near the threshold: points downwind, longer in stronger wind
+            float sock = Mathf.Clamp(Mathf.Abs(level.crosswind) * 1.5f, 1, 8);
+            Box(new Vector3(-60, 5, 150), new Vector3(0.4f, 10, 0.4f), Tokens.TextMuted);
+            Box(new Vector3(-60 + Mathf.Sign(level.crosswind == 0 ? 1 : level.crosswind) * sock * 0.5f, 9.5f, 150), new Vector3(sock, 1.2f, 1.2f), Tokens.Amber, 2);
+
+            var hill = Tokens.Hex(0x0C1416);
+            var rng = new System.Random(99);
+            for (int i = 0; i < 24; i++)
+            {
+                float a = i / 24f * Mathf.PI * 2, d = 9000 + (float)rng.NextDouble() * 3000, h = 200 + (float)rng.NextDouble() * 500;
+                Box(new Vector3(Mathf.Cos(a) * d, h / 2, len * 0.5f + Mathf.Sin(a) * d), new Vector3(2500, h, 2500), hill);
+            }
         }
 
         void Update()
